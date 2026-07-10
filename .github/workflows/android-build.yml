@@ -1,0 +1,45 @@
+name: Android Cloud Build
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Setup Java Development Kit (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Application Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Configure EAS CLI Tools
+        run: npm install -g eas-cli
+
+      - name: Generate Native Android Directory
+        run: npx expo prebuild --platform android --clean
+
+      - name: Compile Production APK via Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload Finished APK File
+        uses: actions/upload-artifact@v4
+        with:
+          name: SciPractice-Release-APK
+          path: android/app/build/outputs/apk/release/app-release.apk

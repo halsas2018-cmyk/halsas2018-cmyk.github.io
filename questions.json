@@ -1,0 +1,32 @@
+cat << 'EOF' > questions.json
+{
+  "intro": [
+    {
+      "question": "Which of the following is the standard SI unit for thermodynamic temperature?",
+      "options": ["A. Celsius", "B. Kelvin", "C. Fahrenheit", "D. Rankine"],
+      "answer": "B",
+      "explanation": "Kelvin is the official SI unit for temperature. While Celsius is widely used in laboratories, Kelvin is the absolute thermodynamic standard.",
+      "subtopic": "SI units and significant figures"
+    }
+  ],
+  "atom": [
+    {
+      "question": "What is the maximum number of electrons that can occupy the 'p' orbital subshell?",
+      "options": ["A. 2", "B. 6", "C. 10", "D. 14"],
+      "answer": "B",
+      "explanation": "An s-subshell holds 2 electrons, a p-subshell holds a maximum of 6 electrons, a d-subshell holds 10, and an f-subshell holds 14.",
+      "subtopic": "Electron configurations (s,p,d) for first thirty elements"
+    }
+  ],
+  "separation": [
+    {
+      "question": "Which separation technique is most suitable for obtaining pure water from a salt solution?",
+      "options": ["A. Filtration", "B. Crystallization", "C. Simple Distillation", "D. Chromatography"],
+      "answer": "C",
+      "explanation": "Simple distillation allows the volatile liquid (water) to be vaporized, condensed, and collected, leaving the non-volatile solute (salt) behind.",
+      "subtopic": "Crystallization, Distillation, and Chromatography"
+    }
+  ]
+}
+EOF
+
