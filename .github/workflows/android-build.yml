@@ -11,10 +11,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js Environment
+      - name: Setup Node.js Environment (Node 20)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Setup Java Development Kit (JDK 17)
@@ -37,7 +37,7 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
-
+          
       - name: Upload Finished APK File
         uses: actions/upload-artifact@v4
         with:
