@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import s from "../styles";
 import { SUBJECTS, WHATSAPP_NUMBER, YOUTUBE_URL, WEBSITE_URL } from "../constants";
 import BookingModal from "../components/BookingModal";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
 
 function PremiumPressable({ onPress, style, children, disabled }) {
   const scaleValue = useRef(new Animated.Value(1)).current;
@@ -213,7 +213,7 @@ export default function HomeScreen({ navigation }) {
           </PremiumPressable>
         </View>
 
-        <AdBanner />
+        <BannerAd />
       </ScrollView>
     </SafeAreaView>
   );

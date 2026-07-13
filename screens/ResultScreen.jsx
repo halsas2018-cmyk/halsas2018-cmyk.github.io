@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking } from 'r
 import { quizStorage } from '../storage/quizStorage';
 import { WHATSAPP_NUMBER } from '../constants';
 import BookingModal from '../components/BookingModal';
-import AdBanner from '../components/AdBanner';
+import BannerAd from '../components/BannerAd';
 import { useAds } from '../components/AdProvider';
 
 export default function ResultScreen({ route, navigation }) {
@@ -93,7 +93,7 @@ export default function ResultScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      <AdBanner />
+      <BannerAd />
     </ScrollView>
   );
 }

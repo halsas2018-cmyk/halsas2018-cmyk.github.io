@@ -49,20 +49,25 @@ Ads are wired into the React-Navigation app via a single `AdProvider`
 the ad hooks ONCE and exposes `useAds()` to screens. Ad SDK init (`mobileAds().initialize()`)
 happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
 - `components/AdBanner.jsx` — real **native ad** (`NativeAdView` + `NativeAsset` from
-  `react-native-google-mobile-ads`), rendered inline on list screens. Replaces the old
-  placeholder banner. Native unit ID `ca-app-pub-2857595249161834/6548437916`
-  (`__DEV__` → `TestIds.NATIVE`).
+  `react-native-google-mobile-ads`), rendered inline on scrollable list screens
+  (Topics, StudyHub, ExamsHub, LabHub, History, LabResults). Native unit ID
+  `ca-app-pub-2857595249161834/6548437916` (`__DEV__` → `TestIds.NATIVE`).
+- `components/BannerAd.jsx` — real **banner ad** (`BannerAd` + `BannerAdSize.BANNER`),
+  shown on Home and Result screens. Banner unit ID
+  `ca-app-pub-2857595249161834/9387356261` (`__DEV__` → `TestIds.BANNER`).
 - `components/RewardedAd.jsx` / `InterstitialAd.jsx` / `RewardedInterstitialAd.jsx` — hooks
-  `useRewardedAd` / `useInterstitialAd` / `useRewardedInterstitial`. All four ad unit IDs
+  `useRewardedAd` / `useInterstitialAd` / `useRewardedInterstitial`. All five ad unit IDs
   are now used (see `ADS_IMPLEMENTATION_NOTES.md`).
-- **Banners** (inline): Home, Topics, StudyHub, ExamsHub, LabHub, History, LabResults,
-  Result. NOT on Quiz or lab sim screens.
+- **Banners** (real `BannerAd`): Home, Result.
+- **Native ads** (`AdBanner`): Topics, StudyHub, ExamsHub, LabHub, History, LabResults
+  (scrollable list screens). NOT on Quiz or lab sim screens.
 - **Rewarded unlock** (`useRewardedAd`): `LOCKED_TOPICS` advanced topics in `TopicsScreen`,
   and "READY ▸" lab sims in `ExperimentsScreen` — tap → watch ad → start.
-- **Interstitial** (`useInterstitialAd`, 90s cooldown): quiz finish → Result (every 4th
-  session), Result → Topics (every 3rd tap), Final Exam launch.
-- **Rewarded-interstitial** (`useRewardedInterstitial`, 60s cooldown): tapping a past quiz
-  result (History) or lab report (LabResults) before viewing.
+- **Interstitial** (`useInterstitialAd`, **no time cooldown** — served on session count):
+  quiz finish → Result (every 4th session), Result → Topics (every 3rd tap), Final Exam
+  launch.
+- **Rewarded-interstitial** (`useRewardedInterstitial`, **no time cooldown**): tapping a
+  past quiz result (History) or lab report (LabResults) before viewing.
 - `LOCKED_TOPICS` (constants.js) = Chemistry 5 + Biology 9 + Physics 14 advanced topics
   (proposed set — confirm with owner). Gate = watch-a-rewarded-ad, NOT payment;
   WhatsApp/SESSION_PRICES are tutor booking only.

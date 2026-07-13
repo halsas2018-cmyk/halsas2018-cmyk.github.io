@@ -3,13 +3,9 @@ import { useInterstitialAd } from "./InterstitialAd";
 import { useRewardedInterstitial } from "./RewardedInterstitialAd";
 import { useRewardedAd } from "./RewardedAd";
 
-// Cooldowns (ms)
-const NORMAL_COOLDOWN = 90 * 1000; // normal interstitials: quiz/done, result→topics, exam launch
-const RESULT_VIEW_COOLDOWN = 60 * 1000; // rewarded-interstitial for viewing past results
-
-// Frequency
-const QUIZ_SESSION_MOD = 4; // show quiz-complete interstitial every 4th finished session
-const RESULT_TAP_MOD = 3; // show result→topics interstitial every 3rd tap
+// Frequency only — NO time cooldown (ads served on session count)
+const QUIZ_SESSION_MOD = 4; // quiz→result interstitial every 4th finished session
+const RESULT_TAP_MOD = 3;   // result→topics interstitial every 3rd tap
 
 const AdContext = createContext(null);
 
@@ -21,29 +17,23 @@ export function AdProvider({ children }) {
   const resultViewDone = useRef(null);
   const unlockDone = useRef(null);
 
-  // Counters + cooldown timestamps
+  // Counters
   const quizSessionCount = useRef(0);
   const resultTapCount = useRef(0);
-  const lastNormalAdAt = useRef(0);
-  const lastResultViewAdAt = useRef(0);
 
   // Three normal-interstitial instances (one per trigger) — all use the same unit ID
   const { showAd: showQuizInt } = useInterstitialAd(() => {
-    lastNormalAdAt.current = Date.now();
     quizDone.current && quizDone.current();
   });
   const { showAd: showTopicsInt } = useInterstitialAd(() => {
-    lastNormalAdAt.current = Date.now();
     topicsDone.current && topicsDone.current();
   });
   const { showAd: showExamInt } = useInterstitialAd(() => {
-    lastNormalAdAt.current = Date.now();
     examDone.current && examDone.current();
   });
 
   // Rewarded-interstitial for viewing past results (History / Lab reports)
   const { showAd: showResultViewInt } = useRewardedInterstitial(() => {
-    lastResultViewAdAt.current = Date.now();
     resultViewDone.current && resultViewDone.current();
   });
 
@@ -52,52 +42,38 @@ export function AdProvider({ children }) {
     unlockDone.current && unlockDone.current();
   });
 
-  // Immediately after finishing a quiz session — every 4th session + 90s cooldown
+  // Immediately after finishing a quiz session — every 4th finished session
   const maybeQuizComplete = (onDone) => {
     quizDone.current = onDone;
     quizSessionCount.current += 1;
-    if (
-      quizSessionCount.current % QUIZ_SESSION_MOD === 0 &&
-      Date.now() - lastNormalAdAt.current >= NORMAL_COOLDOWN
-    ) {
+    if (quizSessionCount.current % QUIZ_SESSION_MOD === 0) {
       showQuizInt();
     } else {
       onDone();
     }
   };
 
-  // Result → Topics — every 3rd tap + 90s cooldown
+  // Result → Topics — every 3rd tap
   const maybeResultToTopics = (onDone) => {
     topicsDone.current = onDone;
     resultTapCount.current += 1;
-    if (
-      resultTapCount.current % RESULT_TAP_MOD === 0 &&
-      Date.now() - lastNormalAdAt.current >= NORMAL_COOLDOWN
-    ) {
+    if (resultTapCount.current % RESULT_TAP_MOD === 0) {
       showTopicsInt();
     } else {
       onDone();
     }
   };
 
-  // Launching a Final Exam — 90s cooldown
+  // Launching a Final Exam
   const showExamLaunch = (onDone) => {
     examDone.current = onDone;
-    if (Date.now() - lastNormalAdAt.current >= NORMAL_COOLDOWN) {
-      showExamInt();
-    } else {
-      onDone();
-    }
+    showExamInt();
   };
 
-  // Viewing a previous result (History / Lab report) — rewarded-interstitial, 60s cooldown
+  // Viewing a previous result (History / Lab report) — rewarded-interstitial
   const showResultView = (onDone) => {
     resultViewDone.current = onDone;
-    if (Date.now() - lastResultViewAdAt.current >= RESULT_VIEW_COOLDOWN) {
-      showResultViewInt();
-    } else {
-      onDone();
-    }
+    showResultViewInt();
   };
 
   // Unlock a locked topic / start a ready lab sim — rewarded ad, proceeds on reward

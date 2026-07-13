@@ -16,13 +16,14 @@
 - Boot: `App.js` calls `mobileAds().initialize()`; spinner until ready (proceeds on error).
 - `app.json` plugin config (AdMob):
   - Android app ID: `ca-app-pub-2857595249161834~2471996491` (REAL)
-  - iOS app ID: `ca-app-pub-3940256099942544~1458002511`  ⚠️ TEST ID — iOS won't serve prod ads
+  - iOS app ID: `ca-app-pub-2857595249161834~2471996491` (REAL, matches Android)
 - All ads use `__DEV__ ? TestIds.X : "ca-app-pub-2857595249161834/..."`.
 
-## Ad unit IDs (account 2857595249161834) — all four now USED
+## Ad unit IDs (account 2857595249161834) — all five now USED
 | Type | Unit ID | Hook / file | Where served |
 |---|---|---|---|
-| Banner | `.../9387356261` | `AdBanner.jsx` | list screens (inline) |
+| Banner | `.../9387356261` | `BannerAd.jsx` | Home + Result screens |
+| Native | `.../6548437916` | `AdBanner.jsx` | scrollable list screens |
 | Rewarded | `.../3777760768` | `useRewardedAd` | topic unlock + lab sim gate |
 | Interstitial | `.../3803892481` | `useInterstitialAd` | quiz-finish, result→topics, exam launch |
 | Rewarded Interstitial | `.../2273107404` | `useRewardedInterstitial` | viewing past results |
@@ -37,28 +38,29 @@ ad hooks once and exposes `useAds()`:
 State (refs):
 - `quizSessionCount` — interstitial on quiz finish every **4th** session
 - `resultTapCount` — interstitial on Result→Topics every **3rd** tap
-- `lastNormalAdAt` — **90s** cooldown (normal interstitials)
-- `lastResultViewAdAt` — **60s** cooldown (rewarded-interstitial)
+- No time cooldowns — ads are served purely on session/tap count.
 
 Exposed API:
-- `maybeQuizComplete(onDone)` — interstitial immediately after a quiz, every 4th + 90s
-- `maybeResultToTopics(onDone)` — interstitial on Result→Topics, every 3rd tap + 90s
-- `showExamLaunch(onDone)` — interstitial on Final Exam launch, 90s
-- `showResultView(onDone)` — rewarded-interstitial before viewing a past result, 60s
+- `maybeQuizComplete(onDone)` — interstitial immediately after a quiz, every 4th session
+- `maybeResultToTopics(onDone)` — interstitial on Result→Topics, every 3rd tap
+- `showExamLaunch(onDone)` — interstitial on Final Exam launch
+- `showResultView(onDone)` — rewarded-interstitial before viewing a past result
 - `unlockWithRewarded(onDone)` — rewarded ad gate, proceeds on reward
 
 If an ad isn't loaded, the hooks' `showAd` calls the on-done callback directly (proceeds
 without an ad) — so flows never hard-block.
 
 ## Where each ad is served (new screens)
-**Banners** (inline/dynamic, inside scroll content — NOT pinned):
+**Banners** (real `BannerAd`, Home + Result):
 - `HomeScreen` (end of ScrollView)
+- `ResultScreen` (end of ScrollView)
+
+**Native ads** (`AdBanner`, scrollable list screens — NOT pinned):
 - `TopicsScreen` (FlatList `ListFooterComponent`)
 - `StudyHubScreen`, `ExamsHubScreen` (stubs — inline)
 - `LabHubScreen` (end of ScrollView)
 - `HistoryScreen`, `LabResultsScreen` (FlatList `ListFooterComponent`)
-- `ResultScreen` (end of ScrollView)
-- ❌ NO banner on `QuizScreen` or on lab simulation screens.
+- ❌ NO ad on `QuizScreen` or on lab simulation screens.
 
 **Rewarded unlock** (`useRewardedAd`):
 - `TopicsScreen` — tapping a `LOCKED_TOPICS` topic shows "🔒 Watch Ad" and gates start via
@@ -66,12 +68,12 @@ without an ad) — so flows never hard-block.
 - `ExperimentsScreen` — tapping a "READY ▸" (interactive) experiment gates start via
   `unlockWithRewarded(() => navigate exp.screen)`. "Coming Soon" experiments show the sheet.
 
-**Interstitial** (`useInterstitialAd`, 90s cooldown):
+**Interstitial** (`useInterstitialAd`, no time cooldown):
 - `QuizScreen.handleNext` (last question) → `maybeQuizComplete(() => navigate ResultScreen)`.
 - `ResultScreen` "Back to Topics List" → `maybeResultToTopics(() => navigate TopicsScreen)`.
 - `ExamsHubScreen` "Start Final Exam" → `showExamLaunch(() => alert(...))`.
 
-**Rewarded-interstitial** (`useRewardedInterstitial`, 60s cooldown):
+**Rewarded-interstitial** (`useRewardedInterstitial`, no time cooldown):
 - `HistoryScreen` — tapping a result card → `showResultView(() => open detail modal)`.
 - `LabResultsScreen` — tapping a report → `showResultView(() => open report modal)`.
 
@@ -84,8 +86,8 @@ WhatsApp/SESSION_PRICES are tutor-booking only). Current set (proposed — confi
 - Physics (14): `p4-*`, `p5-*`, `all-*` (fields, atomic/nuclear, modern/applied)
 
 ## Outstanding / things to note
-1. ⚠️ iOS AdMob app ID in `app.json` is still a Google **test** ID — set a real one before release.
-2. ✅ All four ad unit IDs are now wired (previously the rewarded-interstitial was dead code).
+1. ✅ iOS + Android AdMob app IDs in `app.json` are both the real `ca-app-pub-2857595249161834~2471996491`.
+2. ✅ All five ad unit IDs are now wired (previously the rewarded-interstitial was dead code).
 3. ⚠️ Verification was **structural only** (import audit + JSX review) — no device/emulator
    here, so runtime ad behavior is unconfirmed. Run `expo start` on a device to confirm.
 4. The old single-file `scipractice.jsx` ad logic is no longer the live behavior.
