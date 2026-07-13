@@ -78,16 +78,24 @@ upload the APK as the **SciPractice-Release-APK** artifact (download from the
 run). The `android/` folder is gitignored and regenerated every run.
 
 **Required GitHub repo secrets** (Settings → Secrets and variables → Actions):
-`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEY_ALIAS`, `ANDROID_STORE_PASSWORD`,
+`KEYSTORE_PASSPHRASE`, `ANDROID_KEY_ALIAS`, `ANDROID_STORE_PASSWORD`,
 `ANDROID_KEY_PASSWORD`.
 
+**How signing works (no large base64 secret):** the release keystore is
+committed to the repo **encrypted** as `my-release-key.keystore.gpg` (JKS format
+— stable across JDK versions; CI runs JDK 17, this avoids the
+"Tag number over 30" PKCS12 parse error seen with a JDK-21 PKCS12 keystore).
+The workflow GPG-decrypts it at build time using the `KEYSTORE_PASSPHRASE`
+secret, validates it with `keytool -list` (fails fast), then signs.
+
 **Where the credentials live (DO NOT COMMIT):** `KEYSTORE_CREDENTIALS.txt` at
-the repo root holds the keystore alias + passwords and points to
-`my-release-key.keystore` (binary) and `my-release-key.keystore.b64` (the value
-for `ANDROID_KEYSTORE_BASE64`). All three are gitignored. Re-create the secret
-values from `KEYSTORE_CREDENTIALS.txt` if they're ever lost from GitHub.
-⚠️ The keystore + password are the ONLY way to ship app updates — back them up
-offline (password manager / encrypted note). See `KEYSTORE_CREDENTIALS.txt`.
+the repo root holds the keystore alias, passwords, the `KEYSTORE_PASSPHRASE`,
+and how the CI consumes them. `my-release-key.keystore` (binary) and
+`KEYSTORE_CREDENTIALS.txt` are gitignored; only the encrypted `.gpg` is
+committed. Re-create the secret values from `KEYSTORE_CREDENTIALS.txt` if they're
+ever lost from GitHub. ⚠️ The keystore + password are the ONLY way to ship app
+updates — back them up offline (password manager / encrypted note). See
+`KEYSTORE_CREDENTIALS.txt`.
 
 ## Conventions
 - Data is **split into per-topic / per-entity files with `index.js` aggregators** — never a single monolith. Adding an item = create one file + update its `index.js`.

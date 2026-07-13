@@ -34,9 +34,25 @@ jobs:
           CI: '1'
           EXPO_NO_TELEMETRY: '1'
 
-      - name: Decode Signing Keystore
+      - name: Decrypt Signing Keystore
+        # The keystore is committed ENCRYPTED (my-release-key.keystore.gpg at repo
+        # root) and decrypted here with the KEYSTORE_PASSPHRASE secret. This avoids
+        # shipping a ~3.6 KB base64 secret that gets truncated when pasted.
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/my-release-key.keystore
+          gpg --batch --yes --pinentry-mode loopback \
+            --passphrase "${{ secrets.KEYSTORE_PASSPHRASE }}" \
+            -d my-release-key.keystore.gpg > android/app/my-release-key.keystore
+          echo "Decrypted keystore ($(wc -c < android/app/my-release-key.keystore) bytes)."
+
+      - name: Validate Signing Keystore (fail fast)
+        # Fails in seconds if the keystore is corrupt/undecryptable, instead of
+        # after a 14-minute build at packageRelease.
+        run: |
+          keytool -list \
+            -keystore android/app/my-release-key.keystore \
+            -storepass "${{ secrets.ANDROID_STORE_PASSWORD }}" \
+            -alias "${{ secrets.ANDROID_KEY_ALIAS }}" >/dev/null \
+            || { echo "::error::Keystore unreadable — check KEYSTORE_PASSPHRASE and ANDROID_* secrets"; exit 1; }
 
       - name: Write Signing Properties
         # Prepend a newline so we never merge onto the file's last line
