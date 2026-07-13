@@ -1,0 +1,91 @@
+# Ads Implementation Notes (SciPracticePublish_Backup)
+
+> Working reference for the ads/locks architecture in THIS directory.
+> Refreshed: 2026-07-13 — now reflects the wired React-Navigation app (AdProvider).
+> Last pre-migration state (single-file `scipractice.jsx`) is HISTORICAL; do not follow it.
+
+## Architecture reality (current)
+- `App.js` → `mobileAds().initialize()` (spinner until ready) → `<AdProvider>` →
+  `<NavigationContainer>` → `<RootNavigator>`. All ads are wired through `AdProvider`.
+- `screens/` + `navigation/` + `lab/` + `study/` + `storage/` all exist (copied from the
+  SDK-54 source; this folder stays SDK 56).
+- `scipractice.jsx` is **orphaned** (not imported by `App.js`) — kept only as a reference.
+
+## Ad infrastructure
+- SDK: `react-native-google-mobile-ads` `^15.6.0`
+- Boot: `App.js` calls `mobileAds().initialize()`; spinner until ready (proceeds on error).
+- `app.json` plugin config (AdMob):
+  - Android app ID: `ca-app-pub-2857595249161834~2471996491` (REAL)
+  - iOS app ID: `ca-app-pub-3940256099942544~1458002511`  ⚠️ TEST ID — iOS won't serve prod ads
+- All ads use `__DEV__ ? TestIds.X : "ca-app-pub-2857595249161834/..."`.
+
+## Ad unit IDs (account 2857595249161834) — all four now USED
+| Type | Unit ID | Hook / file | Where served |
+|---|---|---|---|
+| Banner | `.../9387356261` | `AdBanner.jsx` | list screens (inline) |
+| Rewarded | `.../3777760768` | `useRewardedAd` | topic unlock + lab sim gate |
+| Interstitial | `.../3803892481` | `useInterstitialAd` | quiz-finish, result→topics, exam launch |
+| Rewarded Interstitial | `.../2273107404` | `useRewardedInterstitial` | viewing past results |
+
+## AdProvider (`components/AdProvider.jsx`) — the wiring hub
+Mounted ONCE in `App.js` (above the navigator) so counters/cooldowns persist. Calls the
+ad hooks once and exposes `useAds()`:
+- `useInterstitialAd` ×3 — one per trigger (quiz-finish, result→topics, exam-launch)
+- `useRewardedInterstitial` ×1 — viewing past results
+- `useRewardedAd` ×1 — unlocking (locked topics / ready lab sims)
+
+State (refs):
+- `quizSessionCount` — interstitial on quiz finish every **4th** session
+- `resultTapCount` — interstitial on Result→Topics every **3rd** tap
+- `lastNormalAdAt` — **90s** cooldown (normal interstitials)
+- `lastResultViewAdAt` — **60s** cooldown (rewarded-interstitial)
+
+Exposed API:
+- `maybeQuizComplete(onDone)` — interstitial immediately after a quiz, every 4th + 90s
+- `maybeResultToTopics(onDone)` — interstitial on Result→Topics, every 3rd tap + 90s
+- `showExamLaunch(onDone)` — interstitial on Final Exam launch, 90s
+- `showResultView(onDone)` — rewarded-interstitial before viewing a past result, 60s
+- `unlockWithRewarded(onDone)` — rewarded ad gate, proceeds on reward
+
+If an ad isn't loaded, the hooks' `showAd` calls the on-done callback directly (proceeds
+without an ad) — so flows never hard-block.
+
+## Where each ad is served (new screens)
+**Banners** (inline/dynamic, inside scroll content — NOT pinned):
+- `HomeScreen` (end of ScrollView)
+- `TopicsScreen` (FlatList `ListFooterComponent`)
+- `StudyHubScreen`, `ExamsHubScreen` (stubs — inline)
+- `LabHubScreen` (end of ScrollView)
+- `HistoryScreen`, `LabResultsScreen` (FlatList `ListFooterComponent`)
+- `ResultScreen` (end of ScrollView)
+- ❌ NO banner on `QuizScreen` or on lab simulation screens.
+
+**Rewarded unlock** (`useRewardedAd`):
+- `TopicsScreen` — tapping a `LOCKED_TOPICS` topic shows "🔒 Watch Ad" and gates start via
+  `unlockWithRewarded(() => navigate QuizScreen)`. Non-locked topics navigate directly.
+- `ExperimentsScreen` — tapping a "READY ▸" (interactive) experiment gates start via
+  `unlockWithRewarded(() => navigate exp.screen)`. "Coming Soon" experiments show the sheet.
+
+**Interstitial** (`useInterstitialAd`, 90s cooldown):
+- `QuizScreen.handleNext` (last question) → `maybeQuizComplete(() => navigate ResultScreen)`.
+- `ResultScreen` "Back to Topics List" → `maybeResultToTopics(() => navigate TopicsScreen)`.
+- `ExamsHubScreen` "Start Final Exam" → `showExamLaunch(() => alert(...))`.
+
+**Rewarded-interstitial** (`useRewardedInterstitial`, 60s cooldown):
+- `HistoryScreen` — tapping a result card → `showResultView(() => open detail modal)`.
+- `LabResultsScreen` — tapping a report → `showResultView(() => open report modal)`.
+
+## LOCKED_TOPICS (constants.js)
+Gates advanced topics behind a **watch-a-rewarded-ad to unlock** flow (NOT payment;
+WhatsApp/SESSION_PRICES are tutor-booking only). Current set (proposed — confirm with owner):
+- Chemistry (5): `organic, industry, biochem, metals, practical`
+- Biology (9): `secA-genetics-*`, `secA-evolution`, `secC-blood-transfusion`,
+  `secC-paternity`, `secC-crime-detection`
+- Physics (14): `p4-*`, `p5-*`, `all-*` (fields, atomic/nuclear, modern/applied)
+
+## Outstanding / things to note
+1. ⚠️ iOS AdMob app ID in `app.json` is still a Google **test** ID — set a real one before release.
+2. ✅ All four ad unit IDs are now wired (previously the rewarded-interstitial was dead code).
+3. ⚠️ Verification was **structural only** (import audit + JSX review) — no device/emulator
+   here, so runtime ad behavior is unconfirmed. Run `expo start` on a device to confirm.
+4. The old single-file `scipractice.jsx` ad logic is no longer the live behavior.

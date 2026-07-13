@@ -1,51 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
-import mobileAds from 'react-native-google-mobile-ads';
-import SciPractice from './scipractice';
+import React, { useState, useEffect } from "react";
+import { View, ActivityIndicator, StatusBar } from "react-native";
+import mobileAds from "react-native-google-mobile-ads";
+import { AdProvider } from "./components/AdProvider";
+import RootNavigator from "./navigation/RootNavigator";
 
 export default function App() {
-  const [isAdsReady, setIsAdsReady] = useState(false);
+  const [adsReady, setAdsReady] = useState(false);
 
   useEffect(() => {
-    // Initialize the native Google Mobile Ads SDK once during boot
+    // Initialize the Google Mobile Ads SDK once at boot so banners/interstitials load.
     mobileAds()
       .initialize()
-      .then(adapterStatuses => {
-        console.log('AdMob initialization complete.', adapterStatuses);
-        setIsAdsReady(true);
-      })
-      .catch(error => {
-        console.error('AdMob initialization failed:', error);
-        // Fallback so the app opens even if initialization encounters an error
-        setIsAdsReady(true);
-      });
+      .then(() => setAdsReady(true))
+      .catch(() => setAdsReady(true)); // proceed even if init fails
   }, []);
 
-  // Show a blank loading view or a spinner while the native SDK registers your App ID
-  if (!isAdsReady) {
+  if (!adsReady) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
+        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <SciPractice />
-    </View>
+    <AdProvider>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer>
+    </AdProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
