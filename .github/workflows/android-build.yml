@@ -1,8 +1,10 @@
-name: Android Cloud Build
+name: Android APK Build
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,34 +13,50 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js Environment (Node 20)
+      - name: Setup Node.js (Node 20)
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Setup Java Development Kit (JDK 17)
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install Application Dependencies
+      - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Configure EAS CLI Tools
-        run: npm install -g eas-cli
-
-      - name: Generate Native Android Directory
+      - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
+        env:
+          CI: '1'
+          EXPO_NO_TELEMETRY: '1'
 
-      - name: Compile Production APK via Gradle
+      - name: Decode Signing Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/my-release-key.keystore
+
+      - name: Write Signing Properties
+        run: |
+          {
+            echo "MYAPP_UPLOAD_STORE_FILE=my-release-key.keystore"
+            echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}"
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.ANDROID_STORE_PASSWORD }}"
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}"
+          } >> android/gradle.properties
+
+      - name: Patch build.gradle for Release Signing
+        run: node ci/patch-android-signing.js
+
+      - name: Build Signed Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
-          
-      - name: Upload Finished APK File
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
           name: SciPractice-Release-APK
