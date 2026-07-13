@@ -93,7 +93,7 @@ export default function QuizScreen({ route, navigation }) {
         <Text style={{ fontSize: 44, marginBottom: 12 }}>🧪</Text>
         <Text style={{ fontSize: 18, fontWeight: "700", color: "#111827" }}>Question Set Not Found</Text>
         <TouchableOpacity
-          onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("TopicsScreen", { subjectId })}
+          onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.popTo("TopicsScreen")}
           style={{ marginTop: 24, backgroundColor: "#eff6ff", borderWidth: 1, borderColor: "#bfdbfe", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 12 }}
         >
           <Text style={{ color: "#2563eb", fontWeight: "700" }}>Return to Topics</Text>
@@ -137,7 +137,7 @@ export default function QuizScreen({ route, navigation }) {
 
       {/* Premium Top Navigation Bar */}
       <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, flexDirection: "row", alignItems: "center", backgroundColor: "#ffffff", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
-        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("TopicsScreen", { subjectId })} style={{ paddingVertical: 4, paddingHorizontal: 4 }}>
+        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.popTo("TopicsScreen")} style={{ paddingVertical: 4, paddingHorizontal: 4 }}>
           <Text style={{ color: "#16a34a", fontWeight: "700", fontSize: 14 }}>← Back</Text>
         </TouchableOpacity>
         <Text style={{ fontSize: 15, fontWeight: "800", color: "#1e293b", flex: 1, textAlign: "center", marginHorizontal: 12 }} numberOfLines={1}>

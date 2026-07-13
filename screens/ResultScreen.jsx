@@ -87,7 +87,7 @@ export default function ResultScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.translucentWhiteBtn}
-          onPress={() => maybeResultToTopics(() => navigation.navigate('TopicsScreen', { subjectId }))}
+          onPress={() => maybeResultToTopics(() => navigation.popTo('TopicsScreen'))}
         >
           <Text style={styles.whiteBtnText}>Back to Topics List</Text>
         </TouchableOpacity>

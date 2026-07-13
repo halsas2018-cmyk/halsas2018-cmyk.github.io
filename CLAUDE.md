@@ -48,7 +48,10 @@ Ads are wired into the React-Navigation app via a single `AdProvider`
 (`components/AdProvider.jsx`) mounted in `App.js` above `NavigationContainer`. It calls
 the ad hooks ONCE and exposes `useAds()` to screens. Ad SDK init (`mobileAds().initialize()`)
 happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
-- `components/AdBanner.jsx` — banner, rendered inline (dynamic, in scroll) on list screens.
+- `components/AdBanner.jsx` — real **native ad** (`NativeAdView` + `NativeAsset` from
+  `react-native-google-mobile-ads`), rendered inline on list screens. Replaces the old
+  placeholder banner. Native unit ID `ca-app-pub-2857595249161834/6548437916`
+  (`__DEV__` → `TestIds.NATIVE`).
 - `components/RewardedAd.jsx` / `InterstitialAd.jsx` / `RewardedInterstitialAd.jsx` — hooks
   `useRewardedAd` / `useInterstitialAd` / `useRewardedInterstitial`. All four ad unit IDs
   are now used (see `ADS_IMPLEMENTATION_NOTES.md`).
@@ -63,7 +66,8 @@ happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id
 - `LOCKED_TOPICS` (constants.js) = Chemistry 5 + Biology 9 + Physics 14 advanced topics
   (proposed set — confirm with owner). Gate = watch-a-rewarded-ad, NOT payment;
   WhatsApp/SESSION_PRICES are tutor booking only.
-- ⚠️ iOS AdMob app ID in `app.json` is still a Google **test** ID — set a real one before release.
+- The AdMob app ID (`androidAppId` / `iosAppId` in `app.json`) is the real
+  `ca-app-pub-2857595249161834~2471996491` for both platforms.
 - See `ADS_IMPLEMENTATION_NOTES.md` (repo root) for the full ad map — keep until final build.
 
 ## GitHub APK build (CI)
@@ -175,6 +179,7 @@ only use this for a first-ever release or a fresh app listing.
 - Topic/experiment `id`s must match `constants.js`.
 - **Question bank is lazy-loaded per subject.** `screens/QuizScreen.jsx` loads only the subject being quizzed via literal-path `require` thunks (e.g. `require("../questions/physics/index").default`), cached per subject. Do NOT add a static top-level `import` of the whole bank (or `questions/index`) into any screen in the startup import graph — it would force Metro to evaluate all ~5,900 questions at app boot and lag the home/topic screens. Note: Metro rejects `require(variable)`, so the thunks must wrap literal-path requires.
 - Lab tab nesting: `LabHub`(tab) → `LabHubScreen`(stack) → `ChemistryExperiments` → `Experiments`. Nested screens need **UNIQUE names** (tab "LabHub" vs stack screen "LabHubScreen") or React Navigation warns.
+- **Back-stack anti-pattern (do NOT reintroduce):** in React Navigation v7, `navigation.navigate("TopicsScreen", …)` from `ResultScreen`/`QuizScreen` **pushes a new `TopicsScreen`** instead of popping back to the existing one — every quiz→result cycle then leaves `Quiz + Result + Topics` stacked, and pressing back walks through all of them before reaching Home. To return to the parent list screen, use `navigation.popTo("TopicsScreen")` (pops everything above the existing route). `goBack()` is fine for a single-screen pop; only `navigate` to an existing route name causes the growth.
 
 ## Building a lab / interactive experiment
 The titration lab is the reference implementation. Reuse its parts for every new
