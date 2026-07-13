@@ -67,35 +67,108 @@ happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id
 - See `ADS_IMPLEMENTATION_NOTES.md` (repo root) for the full ad map — keep until final build.
 
 ## GitHub APK build (CI)
-A signed release APK is built automatically by GitHub Actions — no local
-Android SDK required. Workflow: `.github/workflows/android-build.yml` (runs on
-push to `main`, or manually via **Actions → Android APK Build → Run workflow**).
-Steps: `expo prebuild --platform android --clean` → decode keystore from a repo
-secret → inject signing props into `android/gradle.properties` → patch the
-generated `android/app/build.gradle` to sign the release with our key (via
-`ci/patch-android-signing.js`, idempotent) → `./gradlew assembleRelease` →
-upload the APK as the **SciPractice-Release-APK** artifact (download from the
-run). The `android/` folder is gitignored and regenerated every run.
 
-**Required GitHub repo secrets** (Settings → Secrets and variables → Actions):
-`KEYSTORE_PASSPHRASE`, `ANDROID_KEY_ALIAS`, `ANDROID_STORE_PASSWORD`,
-`ANDROID_KEY_PASSWORD`.
+A **signed release APK** is built automatically by GitHub Actions — no local
+Android SDK needed. The workflow `.github/workflows/android-build.yml` runs on
+every push to `main`, or manually via **Actions → Android APK Build → Run
+workflow**. It produces the **SciPractice-Release-APK** artifact (a zip
+containing `app-release.apk`, ~37 MB). The build takes ~15 minutes.
 
-**How signing works (no large base64 secret):** the release keystore is
-committed to the repo **encrypted** as `my-release-key.keystore.gpg` (JKS format
-— stable across JDK versions; CI runs JDK 17, this avoids the
-"Tag number over 30" PKCS12 parse error seen with a JDK-21 PKCS12 keystore).
-The workflow GPG-decrypts it at build time using the `KEYSTORE_PASSPHRASE`
-secret, validates it with `keytool -list` (fails fast), then signs.
+### Build steps (what the workflow does)
+1. `npm install --legacy-peer-deps`
+2. `expo prebuild --platform android --clean` → generates the `android/` project
+   (gitignored; regenerated every run). Node 22 LTS + JDK 17.
+3. **Decrypt keystore:** GPG-decrypts the committed `my-release-key.keystore.gpg`
+   → `android/app/my-release-key.keystore` using the `KEYSTORE_PASSPHRASE` secret.
+4. **Validate:** `keytool -list` fails fast (seconds) if the keystore is
+   undecryptable, instead of after a 14-minute build at `packageRelease`.
+5. **Inject signing props:** appends `MYAPP_UPLOAD_*` to `android/gradle.properties`
+   (a leading newline is prepended so the props never merge onto the
+   `kotlinVersion` line, which would break the Kotlin version parse).
+6. **Patch:** `node ci/patch-android-signing.js` points the `release` build type at
+   our keystore (idempotent — safe to re-run).
+7. `./gradlew assembleRelease --no-daemon` → uploads the APK as the
+   **SciPractice-Release-APK** artifact.
 
-**Where the credentials live (DO NOT COMMIT):** `KEYSTORE_CREDENTIALS.txt` at
-the repo root holds the keystore alias, passwords, the `KEYSTORE_PASSPHRASE`,
-and how the CI consumes them. `my-release-key.keystore` (binary) and
-`KEYSTORE_CREDENTIALS.txt` are gitignored; only the encrypted `.gpg` is
-committed. Re-create the secret values from `KEYSTORE_CREDENTIALS.txt` if they're
-ever lost from GitHub. ⚠️ The keystore + password are the ONLY way to ship app
-updates — back them up offline (password manager / encrypted note). See
-`KEYSTORE_CREDENTIALS.txt`.
+### Required GitHub repo secrets
+Set at **Settings → Secrets and variables → Actions**. All four are required:
+
+| Secret | Meaning |
+|---|---|
+| `KEYSTORE_PASSPHRASE` | passphrase that GPG-decrypts the committed `my-release-key.keystore.gpg` |
+| `ANDROID_KEY_ALIAS` | keystore alias (currently `scipractice`) |
+| `ANDROID_STORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+The live values for all four are in the gitignored `KEYSTORE_CREDENTIALS.txt`
+(root). `ANDROID_KEYSTORE_BASE64` is **no longer used** (superseded by the
+encrypted `.gpg` + `KEYSTORE_PASSPHRASE`) — leave it or delete it.
+
+### How signing works (and why JKS + GPG)
+The release keystore is committed to the repo **encrypted** as
+`my-release-key.keystore.gpg` (AES-256). At build time CI decrypts it with
+`KEYSTORE_PASSPHRASE` and signs with it. This avoids shipping a ~3.6 KB base64
+secret, which gets truncated when pasted into GitHub and corrupts the keystore.
+- **Format is JKS, not PKCS12.** CI builds on **JDK 17**, but the keystore is
+  generated locally on **JDK 21**. A JDK-21 PKCS12 keystore triggers
+  `"Tag number over 30 is not supported"` when JDK 17 reads it. JKS is
+  version-stable and parses fine on JDK 17. **Keep the keystore as JKS.**
+
+### How to run a build
+- **On push:** commit to `main` and push → the workflow starts automatically.
+- **Manual:** Actions → Android APK Build → Run workflow → choose `main` → Run.
+- **Monitor without the UI:** poll the REST API
+  `GET /repos/<owner>/<repo>/actions/runs?head_sha=<commit>` with a token that
+  has `repo`/`actions:read`; the run shows `status` then `conclusion`
+  (`success`/`failure`). ~15 min.
+
+### How to get the APK
+Open the workflow run → **Artifacts** → **SciPractice-Release-APK** → download
+and unzip → `app-release.apk`. Install on a device or upload to Google Play.
+
+### Files involved
+- `.github/workflows/android-build.yml` — the pipeline (prebuild → decrypt →
+  validate → inject props → patch → assembleRelease → upload).
+- `ci/patch-android-signing.js` — makes the `release` build type sign with our
+  keystore (idempotent).
+- `my-release-key.keystore.gpg` — **committed, encrypted** signing keystore.
+- `my-release-key.keystore` — local only, gitignored (binary; back it up).
+- `KEYSTORE_CREDENTIALS.txt` — **gitignored**; all secret values + how CI uses
+  them. NEVER commit.
+- `.gitignore` — ignores `*.keystore`, `my-release-key.keystore.b64`,
+  `KEYSTORE_CREDENTIALS.txt`. The `.gpg` is intentionally **committed**.
+
+### Rotating / regenerating credentials
+If the keystore or passphrase is lost, re-encrypt the existing keystore (values
+in `KEYSTORE_CREDENTIALS.txt`):
+```bash
+gpg --batch --yes --pinentry-mode loopback --cipher-algo AES256 \
+  --passphrase "<KEYSTORE_PASSPHRASE>" \
+  -c -o my-release-key.keystore.gpg my-release-key.keystore
+git add my-release-key.keystore.gpg && git commit -m "Rotate signing keystore"
+```
+Then update the `KEYSTORE_PASSPHRASE` (and alias/passwords if changed) secret in
+GitHub. To make a **brand-new keystore**, regenerate as JKS:
+```bash
+keytool -genkeypair -v -keystore my-release-key.keystore -storetype JKS \
+  -alias scipractice -keyalg RSA -keysize 2048 -validity 10000 \
+  -storepass "<pw>" -keypass "<pw>" \
+  -dname "CN=SciPractice, OU=Dev, O=SciPractice, L=Lagos, ST=Lagos, C=NG"
+```
+⚠️ A new keystore means existing installs **can't be updated over-the-air** —
+only use this for a first-ever release or a fresh app listing.
+
+### Security & operational notes
+- ⚠️ The keystore + passwords are the **only** way to ship app updates — if lost,
+  you cannot update existing installs. Back them up offline (password manager /
+  encrypted note) AND keep `my-release-key.keystore` safe.
+- Never commit the raw keystore or `KEYSTORE_CREDENTIALS.txt` (both gitignored).
+  Only the encrypted `.gpg` goes to the repo.
+- PATs used to push should be **revoked after use** (they appear in chat/CI logs).
+- To push from a machine without `gh`:
+  `git -c "url.https://<TOKEN>@github.com/.insteadOf=https://github.com/" push origin main`
+  (token is one-shot via `-c`, not persisted to `.git/config`). Prefer a normal
+  push over `--force`.
 
 ## Conventions
 - Data is **split into per-topic / per-entity files with `index.js` aggregators** — never a single monolith. Adding an item = create one file + update its `index.js`.
