@@ -40,3 +40,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# signing keystore + credentials (NEVER commit)
+my-release-key.keystore.b64
+KEYSTORE_CREDENTIALS.txt
