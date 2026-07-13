@@ -66,6 +66,29 @@ happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id
 - ⚠️ iOS AdMob app ID in `app.json` is still a Google **test** ID — set a real one before release.
 - See `ADS_IMPLEMENTATION_NOTES.md` (repo root) for the full ad map — keep until final build.
 
+## GitHub APK build (CI)
+A signed release APK is built automatically by GitHub Actions — no local
+Android SDK required. Workflow: `.github/workflows/android-build.yml` (runs on
+push to `main`, or manually via **Actions → Android APK Build → Run workflow**).
+Steps: `expo prebuild --platform android --clean` → decode keystore from a repo
+secret → inject signing props into `android/gradle.properties` → patch the
+generated `android/app/build.gradle` to sign the release with our key (via
+`ci/patch-android-signing.js`, idempotent) → `./gradlew assembleRelease` →
+upload the APK as the **SciPractice-Release-APK** artifact (download from the
+run). The `android/` folder is gitignored and regenerated every run.
+
+**Required GitHub repo secrets** (Settings → Secrets and variables → Actions):
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEY_ALIAS`, `ANDROID_STORE_PASSWORD`,
+`ANDROID_KEY_PASSWORD`.
+
+**Where the credentials live (DO NOT COMMIT):** `KEYSTORE_CREDENTIALS.txt` at
+the repo root holds the keystore alias + passwords and points to
+`my-release-key.keystore` (binary) and `my-release-key.keystore.b64` (the value
+for `ANDROID_KEYSTORE_BASE64`). All three are gitignored. Re-create the secret
+values from `KEYSTORE_CREDENTIALS.txt` if they're ever lost from GitHub.
+⚠️ The keystore + password are the ONLY way to ship app updates — back them up
+offline (password manager / encrypted note). See `KEYSTORE_CREDENTIALS.txt`.
+
 ## Conventions
 - Data is **split into per-topic / per-entity files with `index.js` aggregators** — never a single monolith. Adding an item = create one file + update its `index.js`.
 - Topic/experiment `id`s must match `constants.js`.
