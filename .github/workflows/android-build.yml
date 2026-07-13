@@ -39,13 +39,13 @@ jobs:
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/my-release-key.keystore
 
       - name: Write Signing Properties
+        # Prepend a newline so we never merge onto the file's last line
+        # (gradle.properties ships without a trailing newline).
         run: |
-          {
-            echo "MYAPP_UPLOAD_STORE_FILE=my-release-key.keystore"
-            echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}"
-            echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.ANDROID_STORE_PASSWORD }}"
-            echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}"
-          } >> android/gradle.properties
+          printf '\nMYAPP_UPLOAD_STORE_FILE=my-release-key.keystore\nMYAPP_UPLOAD_KEY_ALIAS=%s\nMYAPP_UPLOAD_STORE_PASSWORD=%s\nMYAPP_UPLOAD_KEY_PASSWORD=%s\n' \
+            "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            "${{ secrets.ANDROID_STORE_PASSWORD }}" \
+            "${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
 
       - name: Patch build.gradle for Release Signing
         run: node ci/patch-android-signing.js
