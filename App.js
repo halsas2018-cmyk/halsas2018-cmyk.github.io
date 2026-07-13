@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StatusBar } from "react-native";
 import mobileAds from "react-native-google-mobile-ads";
+import { NavigationContainer } from "@react-navigation/native";
 import { AdProvider } from "./components/AdProvider";
 import RootNavigator from "./navigation/RootNavigator";
 
