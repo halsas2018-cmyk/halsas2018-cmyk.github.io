@@ -121,7 +121,7 @@ export default function QuizScreen({ route, navigation }) {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      maybeQuizComplete(() => navigation.navigate("ResultScreen", {
+      maybeQuizComplete(() => navigation.replace("ResultScreen", {
         score: score,
         total: questions.length,
         topicId: topicId,

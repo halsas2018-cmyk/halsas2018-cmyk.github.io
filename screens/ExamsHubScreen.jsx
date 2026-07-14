@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StatusBar, TouchableOpacity, Alert } from "react-native";
 import { useAds } from "../components/AdProvider";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
 
 export default function ExamsHubScreen() {
   const { showExamLaunch } = useAds();
@@ -22,7 +22,7 @@ export default function ExamsHubScreen() {
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Start Final Exam</Text>
       </TouchableOpacity>
 
-      <AdBanner />
+      <BannerAd />
     </View>
   );
 }

@@ -3,7 +3,8 @@ import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal } from "react-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { labStorage } from "../storage/labStorage";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
+import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
 
 const GREEN = "#16a34a";
@@ -50,12 +51,11 @@ export default function LabResultsScreen() {
       </View>
 
       <FlatList
-        data={reports}
+        data={withInlineBanner(reports, 5)}
         keyExtractor={(item) => item.id}
         initialNumToRender={10}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        ListFooterComponent={<AdBanner />}
         ListEmptyComponent={() => (
           <View style={{ alignItems: "center", marginTop: 80, paddingHorizontal: 20 }}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>🧪</Text>
@@ -68,6 +68,11 @@ export default function LabResultsScreen() {
           </View>
         )}
         renderItem={({ item: r }) => (
+          r.__bannerAd ? (
+            <View key={r.id} style={{ marginVertical: 8 }}>
+              <BannerAd />
+            </View>
+          ) : (
           <TouchableOpacity
             key={r.id}
             onPress={() => showResultView(() => setOpen(r))}
@@ -92,6 +97,7 @@ export default function LabResultsScreen() {
               {r.summary ? r.summary + " · " : ""}{r.date}
             </Text>
           </TouchableOpacity>
+          )
         )}
       />
 

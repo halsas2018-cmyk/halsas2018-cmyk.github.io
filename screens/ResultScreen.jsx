@@ -66,6 +66,8 @@ export default function ResultScreen({ route, navigation }) {
           : "Keep reviewing! Review this topic to build your confidence."}
       </Text>
 
+      <BannerAd />
+
       <View style={styles.buttonStack}>
         {/* FIXED: Using replace to wipe the view stack state and re-initialize a fresh quiz set */}
         <TouchableOpacity 
@@ -93,7 +95,6 @@ export default function ResultScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      <BannerAd />
     </ScrollView>
   );
 }

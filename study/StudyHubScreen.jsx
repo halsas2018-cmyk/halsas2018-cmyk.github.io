@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StatusBar } from "react-native";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
 
 export default function StudyHubScreen() {
   return (
@@ -9,7 +9,7 @@ export default function StudyHubScreen() {
       <Text style={{ fontSize: 24, marginBottom: 8 }}>📚</Text>
       <Text style={{ fontSize: 18, fontWeight: "700", color: "#111827" }}>Study Cards</Text>
       <Text style={{ fontSize: 14, color: "#6b7280", marginTop: 4, marginBottom: 16, textAlign: "center" }}>Active recall & terminology decks</Text>
-      <AdBanner />
+      <BannerAd />
     </View>
   );
 }

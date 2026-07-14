@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, Modal } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import BannerAd from "../components/BannerAd";
+import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
 
 const GREEN = "#16a34a";
@@ -52,12 +54,17 @@ export default function ExperimentsScreen() {
       </View>
 
       <FlatList
-        data={experiments}
+        data={withInlineBanner(experiments, 3)}
         keyExtractor={(item) => item.id}
         initialNumToRender={10}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item: exp }) => (
+          exp.__bannerAd ? (
+            <View key={exp.id} style={{ marginVertical: 8 }}>
+              <BannerAd />
+            </View>
+          ) : (
           <TouchableOpacity
             key={exp.id}
             onPress={() => {
@@ -100,6 +107,7 @@ export default function ExperimentsScreen() {
               </Text>
             </View>
           </TouchableOpacity>
+          )
         )}
       />
 

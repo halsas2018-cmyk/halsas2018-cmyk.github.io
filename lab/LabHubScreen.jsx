@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WHATSAPP_NUMBER } from "../constants";
 import BookingModal from "../components/BookingModal";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
@@ -191,6 +191,8 @@ export default function LabHubScreen() {
           <Ionicons name="chevron-forward" size={20} color="#2563eb" />
         </PremiumPressable>
 
+        <BannerAd />
+
         {/* BOOK A TUTOR CARD */}
         <PremiumPressable onPress={openBooking} style={{
           backgroundColor: "#fff7ed",
@@ -216,9 +218,6 @@ export default function LabHubScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color="#ea580c" />
         </PremiumPressable>
-
-        <AdBanner />
-
       </ScrollView>
     </SafeAreaView>
   );

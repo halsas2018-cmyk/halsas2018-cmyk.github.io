@@ -22,8 +22,8 @@
 ## Ad unit IDs (account 2857595249161834) — all five now USED
 | Type | Unit ID | Hook / file | Where served |
 |---|---|---|---|
-| Banner | `.../9387356261` | `BannerAd.jsx` | Home + Result screens |
-| Native | `.../6548437916` | `AdBanner.jsx` | scrollable list screens |
+| Banner | `.../9387356261` | `BannerAd.jsx` | Home + Result (mid-content) + all list screens (mid-list: Topics, StudyHub, ExamsHub, LabHub, Experiments, History, LabResults) |
+| Native | `.../6548437916` | `AdBanner.jsx` | UNUSED — replaced by BannerAd (native returns zero fill on new accounts) |
 | Rewarded | `.../3777760768` | `useRewardedAd` | topic unlock + lab sim gate |
 | Interstitial | `.../3803892481` | `useInterstitialAd` | quiz-finish, result→topics, exam launch |
 | Rewarded Interstitial | `.../2273107404` | `useRewardedInterstitial` | viewing past results |
@@ -51,26 +51,29 @@ If an ad isn't loaded, the hooks' `showAd` calls the on-done callback directly (
 without an ad) — so flows never hard-block.
 
 ## Where each ad is served (new screens)
-**Banners** (real `BannerAd`, Home + Result):
-- `HomeScreen` (end of ScrollView)
-- `ResultScreen` (end of ScrollView)
+**Banners** (real `BannerAd`, Home + Result + every list screen):
+- `HomeScreen` — mid-content (after the subject cards)
+- `ResultScreen` — mid-content (after the status banner, before the buttons)
+- `TopicsScreen`, `ExperimentsScreen`, `HistoryScreen`, `LabResultsScreen` — MID-list via
+  `withInlineBanner` (after a few rows)
+- `LabHubScreen` — mid-scroll (between the lab cards and Book-a-Tutor)
+- `StudyHubScreen`, `ExamsHubScreen` — inline (centered stubs)
 
-**Native ads** (`AdBanner`, scrollable list screens — NOT pinned):
-- `TopicsScreen` (FlatList `ListFooterComponent`)
-- `StudyHubScreen`, `ExamsHubScreen` (stubs — inline)
-- `LabHubScreen` (end of ScrollView)
-- `HistoryScreen`, `LabResultsScreen` (FlatList `ListFooterComponent`)
-- ❌ NO ad on `QuizScreen` or on lab simulation screens.
+**Native ads** (`AdBanner`) — UNUSED. Replaced by `BannerAd` everywhere. Native units need an
+approved *Native*-typed AdMob unit and returned zero fill on this account, so banners are used
+for all in-feed placement instead.
 
 **Rewarded unlock** (`useRewardedAd`):
 - `TopicsScreen` — tapping a `LOCKED_TOPICS` topic shows "🔒 Watch Ad" and gates start via
   `unlockWithRewarded(() => navigate QuizScreen)`. Non-locked topics navigate directly.
-- `ExperimentsScreen` — tapping a "READY ▸" (interactive) experiment gates start via
-  `unlockWithRewarded(() => navigate exp.screen)`. "Coming Soon" experiments show the sheet.
+- `ExperimentsScreen` — **EVERY interactive experiment** (`exp.screen` tap) is gated via
+  `unlockWithRewarded(() => navigate exp.screen)`. This gates ALL playable virtual labs;
+  "Coming Soon" experiments just show the sheet (no sim to run).
 
 **Interstitial** (`useInterstitialAd`, no time cooldown):
-- `QuizScreen.handleNext` (last question) → `maybeQuizComplete(() => navigate ResultScreen)`.
-- `ResultScreen` "Back to Topics List" → `maybeResultToTopics(() => navigate TopicsScreen)`.
+- `QuizScreen.handleNext` (last question) → `maybeQuizComplete(() => replace ResultScreen)`.
+  Uses `replace` (not `navigate`) so the finished quiz is swapped out — keeps the stack flat.
+- `ResultScreen` "Back to Topics List" → `maybeResultToTopics(() => popTo TopicsScreen)`.
 - `ExamsHubScreen` "Start Final Exam" → `showExamLaunch(() => alert(...))`.
 
 **Rewarded-interstitial** (`useRewardedInterstitial`, no time cooldown):

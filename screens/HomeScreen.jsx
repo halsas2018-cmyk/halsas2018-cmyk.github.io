@@ -148,6 +148,8 @@ export default function HomeScreen({ navigation }) {
           ))}
         </View>
 
+        <BannerAd />
+
         <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
           <PremiumPressable
             style={[s.tutorBanner, cardShadow, { marginHorizontal: 0, backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e5e7eb" }]}
@@ -213,7 +215,6 @@ export default function HomeScreen({ navigation }) {
           </PremiumPressable>
         </View>
 
-        <BannerAd />
       </ScrollView>
     </SafeAreaView>
   );

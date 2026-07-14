@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { quizStorage } from '../storage/quizStorage';
-import AdBanner from '../components/AdBanner';
+import BannerAd from '../components/BannerAd';
+import { withInlineBanner } from '../components/inlineAd';
 import { useAds } from '../components/AdProvider';
 
 export default function HistoryScreen({ navigation }) {
@@ -38,12 +39,11 @@ export default function HistoryScreen({ navigation }) {
       </View>
 
       <FlatList
-        data={logs}
+        data={withInlineBanner(logs, 5)}
         keyExtractor={(item, index) => item.id || String(index)}
         initialNumToRender={10}
         contentContainerStyle={styles.scrollPadding}
         showsVerticalScrollIndicator={false}
-        ListFooterComponent={<AdBanner />}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📊</Text>
@@ -52,6 +52,13 @@ export default function HistoryScreen({ navigation }) {
           </View>
         )}
         renderItem={({ item: log, index }) => {
+          if (log.__bannerAd) {
+            return (
+              <View key={log.id} style={{ marginVertical: 8 }}>
+                <BannerAd />
+              </View>
+            );
+          }
           const percentage = log.percentage !== undefined ? log.percentage : Math.round((log.score / log.total) * 100);
           return (
             <TouchableOpacity key={log.id || index} style={styles.card} activeOpacity={0.8} onPress={() => showResultView(() => setDetail(log))}>

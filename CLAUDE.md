@@ -47,22 +47,28 @@ reference for the old single-file ad wiring — see the Ads section.)
 Ads are wired into the React-Navigation app via a single `AdProvider`
 (`components/AdProvider.jsx`) mounted in `App.js` above `NavigationContainer`. It calls
 the ad hooks ONCE and exposes `useAds()` to screens. Ad SDK init (`mobileAds().initialize()`)
-happens in `App.js` before render. Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
-- `components/AdBanner.jsx` — real **native ad** (`NativeAdView` + `NativeAsset` from
-  `react-native-google-mobile-ads`), rendered inline on scrollable list screens
-  (Topics, StudyHub, ExamsHub, LabHub, History, LabResults). Native unit ID
-  `ca-app-pub-2857595249161834/6548437916` (`__DEV__` → `TestIds.NATIVE`).
+is fired in the background in `App.js` on boot — it is **non-blocking** (the app renders
+immediately; it previously gated the whole UI behind a spinner, causing a multi-second white
+screen). Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
+- `components/AdBanner.jsx` — **native ad**, now UNUSED. Replaced by the more reliable
+  `BannerAd` on every screen — native units need an approved *Native*-typed AdMob unit and
+  frequently return zero fill on new accounts. Kept only as a reference.
 - `components/BannerAd.jsx` — real **banner ad** (`BannerAd` + `BannerAdSize.BANNER`),
-  shown on Home and Result screens. Banner unit ID
+  shown on Home, Result, and ALL scrollable list screens — Topics, StudyHub, ExamsHub,
+  LabHub, **Experiments (experiment selection)**, History, LabResults. On list screens it is
+  rendered MID-list (via `withInlineBanner` in `components/inlineAd.js`) so it's visible
+  without scrolling to the footer; on Home/Result it sits mid-content. Banner unit ID
   `ca-app-pub-2857595249161834/9387356261` (`__DEV__` → `TestIds.BANNER`).
 - `components/RewardedAd.jsx` / `InterstitialAd.jsx` / `RewardedInterstitialAd.jsx` — hooks
   `useRewardedAd` / `useInterstitialAd` / `useRewardedInterstitial`. All five ad unit IDs
   are now used (see `ADS_IMPLEMENTATION_NOTES.md`).
-- **Banners** (real `BannerAd`): Home, Result.
-- **Native ads** (`AdBanner`): Topics, StudyHub, ExamsHub, LabHub, History, LabResults
-  (scrollable list screens). NOT on Quiz or lab sim screens.
+- **Banners** (real `BannerAd`): Home (mid-content), Result (mid-content), and every
+  scrollable list screen — Topics, StudyHub, ExamsHub, LabHub, Experiments, History,
+  LabResults — rendered mid-list. NOT on the Quiz screen or inside a running lab sim.
 - **Rewarded unlock** (`useRewardedAd`): `LOCKED_TOPICS` advanced topics in `TopicsScreen`,
-  and "READY ▸" lab sims in `ExperimentsScreen` — tap → watch ad → start.
+  and **ALL lab simulations** in `ExperimentsScreen` — every interactive `exp.screen` tap is
+  wrapped in `unlockWithRewarded` (tap → watch rewarded ad → start sim). This gates every
+  playable virtual lab; "coming soon" experiments just open a sheet (no sim to gate).
 - **Interstitial** (`useInterstitialAd`, **no time cooldown** — served on session count):
   quiz finish → Result (every 4th session), Result → Topics (every 3rd tap), Final Exam
   launch.
@@ -184,7 +190,13 @@ only use this for a first-ever release or a fresh app listing.
 - Topic/experiment `id`s must match `constants.js`.
 - **Question bank is lazy-loaded per subject.** `screens/QuizScreen.jsx` loads only the subject being quizzed via literal-path `require` thunks (e.g. `require("../questions/physics/index").default`), cached per subject. Do NOT add a static top-level `import` of the whole bank (or `questions/index`) into any screen in the startup import graph — it would force Metro to evaluate all ~5,900 questions at app boot and lag the home/topic screens. Note: Metro rejects `require(variable)`, so the thunks must wrap literal-path requires.
 - Lab tab nesting: `LabHub`(tab) → `LabHubScreen`(stack) → `ChemistryExperiments` → `Experiments`. Nested screens need **UNIQUE names** (tab "LabHub" vs stack screen "LabHubScreen") or React Navigation warns.
-- **Back-stack anti-pattern (do NOT reintroduce):** in React Navigation v7, `navigation.navigate("TopicsScreen", …)` from `ResultScreen`/`QuizScreen` **pushes a new `TopicsScreen`** instead of popping back to the existing one — every quiz→result cycle then leaves `Quiz + Result + Topics` stacked, and pressing back walks through all of them before reaching Home. To return to the parent list screen, use `navigation.popTo("TopicsScreen")` (pops everything above the existing route). `goBack()` is fine for a single-screen pop; only `navigate` to an existing route name causes the growth.
+- **Back-stack is kept flat (do NOT reintroduce growth):** the quiz/result cycle must never
+  stack more than `[TopicsScreen, X]`. Two rules enforce this: (1) `QuizScreen` opens `ResultScreen`
+  with `navigation.replace` (NOT `navigate`) — the finished Quiz is swapped out, not pushed;
+  (2) "Try Again" on `ResultScreen` also uses `navigation.replace("QuizScreen", …)`, and backs use
+  `navigation.popTo("TopicsScreen")`. Repeating "Try Again" therefore never leaves old Quiz screens
+  underneath — pressing back always lands on TopicsScreen in one tap. The ONLY thing that grows the
+  stack is `navigation.navigate` to an *existing* route name (TopicsScreen/LabHub/etc.); never do that.
 
 ## Building a lab / interactive experiment
 The titration lab is the reference implementation. Reuse its parts for every new

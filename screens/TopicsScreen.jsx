@@ -11,7 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import s from "../styles";
 import { SUBJECTS, WHATSAPP_NUMBER, LOCKED_TOPICS } from "../constants";
 import BookingModal from "../components/BookingModal";
-import AdBanner from "../components/AdBanner";
+import BannerAd from "../components/BannerAd";
+import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
 
 export default function TopicsScreen({ route, navigation }) {
@@ -97,13 +98,19 @@ export default function TopicsScreen({ route, navigation }) {
       {/* Topics Stream — windowed FlatList so only visible cards mount
           (Biology's 58 topics no longer block initial render like Chemistry's 15). */}
       <FlatList
-        data={subjectData.topics}
+        data={withInlineBanner(subjectData.topics, 4)}
         keyExtractor={(item) => item.id}
         initialNumToRender={10}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        ListFooterComponent={<AdBanner />}
         renderItem={({ item, index }) => {
+          if (item.__bannerAd) {
+            return (
+              <View key={item.id} style={{ marginVertical: 8 }}>
+                <BannerAd />
+              </View>
+            );
+          }
           const displayIndex = String(index + 1).padStart(2, '0');
           const subtopicsString = item.subtopics ? item.subtopics.join(" · ") : "General study module";
 
