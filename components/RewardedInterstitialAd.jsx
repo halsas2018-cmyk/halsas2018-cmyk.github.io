@@ -17,7 +17,7 @@ export function useRewardedInterstitial(onAdClosed) {
     adRef.current = ad;
     let cancelled = false;
 
-    const unsubscribeLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+    const unsubscribeLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
       retries.current = 0;
     });
     const unsubscribeClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
