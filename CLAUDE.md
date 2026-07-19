@@ -189,6 +189,36 @@ screen). Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
   `ca-app-pub-2857595249161834~2471996491` for both platforms.
 - See `ADS_IMPLEMENTATION_NOTES.md` (repo root) for the full ad map — keep until final build.
 
+## App launch crashes — FIXED (do not reintroduce)
+Three separate launch crashes have each taken down the whole app on boot (white screen →
+`AndroidRuntime: FATAL EXCEPTION: mqt_v_native` / `JavascriptException` at `AdProvider` →
+`ThemeProvider` → `App`). All three are in git history; the symptom each time is the same
+(JS throws in a mount effect the instant the app opens), but the root cause differs. When a
+new launch crash appears, check this list FIRST before hunting elsewhere.
+
+- **`3aaae7c` — NavigationContainer not imported.** `App.js` mounted `RootNavigator` but
+  didn't `import { NavigationContainer } from "@react-navigation/native"`. Fix: add the import.
+- **`dd44e92` — `mobileAds` imported as a named export (the build-1 crash).** The three ad
+  hooks (`InterstitialAd`/`RewardedAd`/`RewardedInterstitialAd`) did
+  `import { …, mobileAds } from "react-native-google-mobile-ads"`. The library exports
+  `MobileAds` (capital) as the named export AND as the default — there is **no lowercase
+  `mobileAds` named export**, so it was `undefined` and `mobileAds().initialize()` threw
+  `TypeError: undefined is not a function` in the mount effect. Fix: alias
+  `MobileAds as mobileAds`. (`App.js` correctly uses the **default** import
+  `import mobileAds from "react-native-google-mobile-ads"`, which is fine.)
+- **`e652e7e` — wrong LOADED event type on RewardedInterstitialAd (the build-5 crash).**
+  `RewardedInterstitialAd.addEventListener(AdEventType.LOADED, …)` **throws synchronously**
+  — the class rejects `AdEventType.LOADED` and demands `RewardedAdEventType.LOADED`. It blew
+  up in `useRewardedInterstitial`'s effect at `AdProvider` mount. Fix: use
+  `RewardedAdEventType.LOADED`.
+
+**AdMob event-type rule (the `e652e7e` trap):** `RewardedAd` and `RewardedInterstitialAd`
+listen for `RewardedAdEventType.LOADED` and `RewardedAdEventType.EARNED_REWARD`.
+`InterstitialAd` listens for `AdEventType.LOADED` / `CLOSED` / `ERROR`. Critically,
+`RewardedInterstitialAd` **rejects `AdEventType.LOADED` with a thrown error** — never pass
+it. When in doubt, grep the three hook files for `addAdEventListener` and match the event
+type to the ad class.
+
 ## GitHub APK build (CI)
 
 A **signed release APK** is built automatically by GitHub Actions — no local
