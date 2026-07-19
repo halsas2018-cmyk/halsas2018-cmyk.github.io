@@ -1,4 +1,5 @@
 import * as FileSystem from "expo-file-system/legacy";
+import { streakStorage } from "./streakStorage";
 
 const FILE_PATH = `${FileSystem.documentDirectory}study_progress.json`;
 
@@ -38,6 +39,7 @@ export const studyStorage = {
     const all = await readAll();
     const k = keyOf(subjectId, topicId, subtopic);
     all[k] = { ...(all[k] || { cardIndex: 0 }), completed: true, completedAt: Date.now() };
+    streakStorage.recordActivity().catch(() => {});
     return writeAll(all);
   },
 

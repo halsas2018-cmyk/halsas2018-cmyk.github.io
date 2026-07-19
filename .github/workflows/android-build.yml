@@ -28,6 +28,12 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      # expo-notifications isn't pinned in package.json (its SDK-compatible
+      # version can't be resolved offline); resolve + install it here where
+      # network is available, before prebuild bundles the app.
+      - name: Install expo-notifications (SDK-compatible)
+        run: npx expo install expo-notifications
+
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
         env:

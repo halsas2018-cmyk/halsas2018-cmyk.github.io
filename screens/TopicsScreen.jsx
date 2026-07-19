@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import s from "../styles";
+import { useTheme, hexToRgba } from "../theme";
 import { SUBJECTS, WHATSAPP_NUMBER, LOCKED_TOPICS } from "../constants";
 import BookingModal from "../components/BookingModal";
 import BannerAd from "../components/BannerAd";
@@ -22,13 +23,14 @@ export default function TopicsScreen({ route, navigation }) {
   const [studentName, setStudentName] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const { unlockWithRewarded } = useAds();
+  const theme = useTheme();
 
   const subjectData = SUBJECTS.find(
     (sub) => sub.id.toLowerCase() === subjectId.toLowerCase()
   ) || SUBJECTS[0];
 
   const cardShadow = {
-    shadowColor: subjectData.accent || "#16a34a",
+    shadowColor: subjectData.accent || theme.colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -54,8 +56,8 @@ export default function TopicsScreen({ route, navigation }) {
 
   return (
     // FIXED: Swapped layout engine, removed manual padding, targeted exact layout bounds
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.colors.bg} translucent={false} />
 
       <BookingModal
         visible={bookingVisible}
@@ -75,7 +77,7 @@ export default function TopicsScreen({ route, navigation }) {
           onPress={() => navigation.navigate("MainTabs", { screen: "PracticeHub" })}
           style={{ alignSelf: "flex-start", paddingVertical: 4, paddingHorizontal: 4, marginBottom: 8 }}
         >
-          <Text style={{ color: "#6b7280", fontWeight: "700", fontSize: 13 }}>← Back to Subjects</Text>
+          <Text style={{ color: theme.colors.textMuted, fontWeight: "700", fontSize: 13 }}>← Back to Subjects</Text>
         </TouchableOpacity>
 
         {/* Clean Dynamic Layout Label Setup */}
@@ -83,13 +85,13 @@ export default function TopicsScreen({ route, navigation }) {
           <Text style={{
             fontSize: 24,
             fontWeight: "800",
-            color: "#111827",
+            color: theme.colors.text,
             letterSpacing: -0.3,
             textTransform: "capitalize"
           }}>
             {subjectData.id} Questions
           </Text>
-          <Text style={{ fontSize: 12, color: "#6b7280", fontWeight: "500", marginTop: 2 }}>
+          <Text style={{ fontSize: 12, color: theme.colors.textMuted, fontWeight: "500", marginTop: 2 }}>
             Interactive Practice
           </Text>
         </View>
@@ -118,10 +120,10 @@ export default function TopicsScreen({ route, navigation }) {
             <View
               style={[
                 {
-                  backgroundColor: "#ffffff",
+                  backgroundColor: theme.colors.surface,
                   borderRadius: 16,
                   borderWidth: 1,
-                  borderColor: "#e5e7eb",
+                  borderColor: theme.colors.border,
                   padding: 16,
                   marginBottom: 14,
                 },
@@ -133,17 +135,17 @@ export default function TopicsScreen({ route, navigation }) {
                 <Text style={{
                   fontSize: 15,
                   fontWeight: "800",
-                  color: subjectData.accent || "#16a34a",
+                  color: subjectData.accent || theme.colors.primary,
                   marginRight: 10,
                   marginTop: 1
                 }}>
                   {displayIndex}
                 </Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: "#111827", marginBottom: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: theme.colors.text, marginBottom: 4 }}>
                     {item.name}
                   </Text>
-                  <Text style={{ fontSize: 12, color: "#6b7280", fontWeight: "500", lineHeight: 16 }}>
+                  <Text style={{ fontSize: 12, color: theme.colors.textMuted, fontWeight: "500", lineHeight: 16 }}>
                     {subtopicsString}
                   </Text>
                 </View>
@@ -170,16 +172,16 @@ export default function TopicsScreen({ route, navigation }) {
                   }}
                   style={{
                     flex: 1,
-                    backgroundColor: LOCKED_TOPICS.includes(item.id) ? "#fffbeb" : "#f0fdf4",
+                    backgroundColor: LOCKED_TOPICS.includes(item.id) ? hexToRgba(theme.colors.star, 0.10) : hexToRgba(theme.colors.primary, 0.08),
                     borderWidth: 1,
-                    borderColor: LOCKED_TOPICS.includes(item.id) ? "#fde68a" : "#bbf7d0",
+                    borderColor: LOCKED_TOPICS.includes(item.id) ? hexToRgba(theme.colors.star, 0.4) : hexToRgba(theme.colors.primary, 0.35),
                     paddingVertical: 10,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center"
                   }}
                 >
-                  <Text style={{ color: LOCKED_TOPICS.includes(item.id) ? "#b45309" : "#16a34a", fontSize: 13, fontWeight: "700" }}>
+                  <Text style={{ color: LOCKED_TOPICS.includes(item.id) ? theme.colors.star : theme.colors.primary, fontSize: 13, fontWeight: "700" }}>
                     {LOCKED_TOPICS.includes(item.id) ? "🔒 Watch Ad" : "Practice"}
                   </Text>
                 </TouchableOpacity>
@@ -189,16 +191,16 @@ export default function TopicsScreen({ route, navigation }) {
                   onPress={() => openBooking(item.name)}
                   style={{
                     flex: 1,
-                    backgroundColor: "#eff6ff",
+                    backgroundColor: theme.colors.accentBlueSoft,
                     borderWidth: 1,
-                    borderColor: "#bfdbfe",
+                    borderColor: hexToRgba(theme.colors.accentBlue, 0.4),
                     paddingVertical: 10,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center"
                   }}
                 >
-                  <Text style={{ color: "#2563eb", fontSize: 13, fontWeight: "700" }}>Book Tutor</Text>
+                  <Text style={{ color: theme.colors.accentBlue, fontSize: 13, fontWeight: "700" }}>Book Tutor</Text>
                 </TouchableOpacity>
               </View>
             </View>

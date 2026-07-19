@@ -41,7 +41,7 @@ export default function StudyTopicsScreen({ route, navigation }) {
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.colors.surface} translucent={false} />
 
       <View style={{ backgroundColor: theme.colors.surface, paddingTop: 16, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: hexToRgba(accent, 0.12) }}>
-        <TouchableOpacity onPress={() => navigation.navigate("StudyHub")} style={{ alignSelf: "flex-start", marginBottom: 8 }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ alignSelf: "flex-start", marginBottom: 8 }}>
           <Text style={{ color: theme.colors.textMuted, fontWeight: "700", fontSize: 13 }}>‹ All subjects</Text>
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center" }}>

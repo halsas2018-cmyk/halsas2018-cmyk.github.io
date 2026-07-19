@@ -86,6 +86,10 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
   completed/total subtopics per subject) → `StudyTopicsScreen` (topics, per-topic completion)
   → `StudySubtopicsScreen` (subtopics, shows `New` / `↺ Resume` / `✓ Done`) →
   `StudyCardScreen` (the swipeable deck).
+- **Back navigation:** `StudyTopicsScreen`'s "‹ All subjects" button uses `navigation.goBack()`
+  (NOT `navigate("StudyHub")` — that name collides with the bottom tab and no-ops). `TabNavigator`
+  resets the `StudyHub` stack to `StudyHubScreen` on `tabPress`, so tapping the Study tab always
+  returns to the subject picker even after a deep link.
 - **Deck (`StudyCardScreen`):** horizontal `ScrollView pagingEnabled`; each card is a premium
   white card. Animated **fill slider** shows progress; a `StudyCard` sub-component springs when
   active. Prev/Next + "Mark subtopic done" on the last card.
@@ -117,10 +121,24 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
   Mounted in `App.js`; gated by `storage/feedbackStorage.js` — shows on first launch ~1.5s after
   open, then re-prompts at most weekly or every 5 launches.
 - **`storage/streakStorage.js`** — `getState()` / `recordActivity()` for the daily-streak pill
-  (`DAILY_GOAL = 10`). Call `recordActivity()` on quiz/lab completion.
+  (`DAILY_GOAL = 10`). `recordActivity()` is wired into the shared save paths so the streak counts
+  automatically: `quizStorage.saveResult` (covers quiz + exam), `labStorage.saveReport` (covers all
+  labs), and `studyStorage.markComplete`. HomeScreen shows the streak pill + a "Day streak" stat
+  bubble (reads `streakStorage.getState()`).
 - **`components/FirstRunModal.jsx`** — 1-time welcome sheet (self-gated by `first_run_done.json`).
-- **Dark mode is live:** root `backgroundColor: theme.colors.bg`, `StatusBar` barStyle follows
-  `theme.isDark`. `App.js` wraps everything in `ThemeProvider` and does a `SplashScreen` fade.
+- **Daily reminders (notifications):** `components/NotificationManager.jsx` + `storage/notificationStorage.js`
+  schedule a daily local notification (default 7 PM) via `expo-notifications`. The enable toggle is in
+  `screens/AboutScreen.jsx`; `App.js` inits the handler and re-applies the persisted setting on boot.
+  `expo-notifications` is **not pinned in `package.json`** — it's installed by a CI step
+  (`npx expo install expo-notifications`, which resolves the SDK-56-compatible version) because it
+  can't be resolved offline. Run that command locally to capture the version into `package.json`.
+- **Dark mode is live + manual toggle:** root `backgroundColor: theme.colors.bg`, `StatusBar`
+  barStyle follows `theme.isDark`. `App.js` wraps everything in `ThemeProvider` and does a
+  `SplashScreen` fade. `theme.js` `ThemeProvider` now also keeps a `mode` (`'system' | 'light' |
+  'dark'`, persisted via `storage/themeStorage.js` using `expo-file-system/legacy` — no
+  async-storage available). `useTheme()` returns the resolved theme **plus** `mode`, `setMode()`,
+  and `toggleTheme()`. The Appearance control (System / Light / Dark segmented buttons) lives in
+  `screens/AboutScreen.jsx`. HomeScreen reaches About via a bottom "About SciPractice" link.
 - **HomeScreen (Practice tab):** translucent single-color header, three **circular stat bubbles**
   (Questions / Labs / Day streak), a "Continue learning" row, "Recommended next", subject cards,
   action tiles. Card shadows are primary-tinted (`shadowColor: theme.colors.primary`), not black.

@@ -14,6 +14,7 @@ import BookingModal from "../components/BookingModal";
 import BannerAd from "../components/BannerAd";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme, hexToRgba } from "../../theme";
 
 // Premium pressable with haptic-like scale effect on click
 function PremiumPressable({ onPress, style, children, disabled }) {
@@ -56,6 +57,7 @@ function PremiumPressable({ onPress, style, children, disabled }) {
 
 export default function LabHubScreen() {
   const navigation = useNavigation();
+  const theme = useTheme();
   const [bookingVisible, setBookingVisible] = useState(false);
   const [studentName, setStudentName] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
@@ -77,8 +79,8 @@ export default function LabHubScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.colors.bg} translucent={false} />
 
       <BookingModal
         visible={bookingVisible}
@@ -92,9 +94,9 @@ export default function LabHubScreen() {
       />
 
       {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#f3f4f6", backgroundColor: "#fff" }}>
-        <Text style={{ fontSize: 24, fontWeight: "900", color: "#111827", letterSpacing: -0.5 }}>🧪 Virtual Lab Suite</Text>
-        <Text style={{ fontSize: 13, color: "#6b7280", marginTop: 4, textAlign: "center" }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, alignItems: "center", borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceAlt, backgroundColor: theme.colors.surface }}>
+        <Text style={{ fontSize: 24, fontWeight: "900", color: theme.colors.text, letterSpacing: -0.5 }}>🧪 Virtual Lab Suite</Text>
+        <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4, textAlign: "center" }}>
           Run simulations, inspect models, or book a session with a specialist
         </Text>
       </View>
@@ -106,89 +108,89 @@ export default function LabHubScreen() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "rgba(22, 163, 74, 0.08)",
+          backgroundColor: hexToRgba(theme.colors.primary, 0.08),
           borderWidth: 1,
-          borderColor: "rgba(22, 163, 74, 0.15)",
+          borderColor: hexToRgba(theme.colors.primary, 0.15),
           borderRadius: 14,
           padding: 14,
         }}>
           <Text style={{ fontSize: 16, marginRight: 8 }}>📋</Text>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#16a34a" }}>Review Previous Lab Results</Text>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: theme.colors.primary }}>Review Previous Lab Results</Text>
         </PremiumPressable>
 
         {/* CHEMISTRY CARD */}
         <PremiumPressable onPress={() => navigation.navigate("ChemistryExperiments")} style={{
-          backgroundColor: "#f0fdf4",
+          backgroundColor: hexToRgba(theme.colors.primary, 0.08),
           borderWidth: 1,
-          borderColor: "#bbf7d0",
+          borderColor: hexToRgba(theme.colors.primary, 0.35),
           borderRadius: 16,
           padding: 18,
           flexDirection: "row",
           alignItems: "center",
-          shadowColor: "#16a34a",
+          shadowColor: theme.colors.primary,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.03,
           shadowRadius: 8,
           elevation: 2,
         }}>
-          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center", marginRight: 16 }}>
-            <Ionicons name="beaker" size={24} color="#16a34a" />
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: hexToRgba(theme.colors.primary, 0.12), alignItems: "center", justifyContent: "center", marginRight: 16 }}>
+            <Ionicons name="beaker" size={24} color={theme.colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#166534" }}>Chemistry Lab</Text>
-            <Text style={{ fontSize: 12, color: "#15803d", marginTop: 2 }}>Titrations, Gas Chambers, Redox Cells</Text>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: theme.colors.primaryDark }}>Chemistry Lab</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.primaryDark, marginTop: 2 }}>Titrations, Gas Chambers, Redox Cells</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#16a34a" />
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textFaint} />
         </PremiumPressable>
 
         {/* PHYSICS CARD */}
         <PremiumPressable onPress={() => navigation.navigate("PhysicsExperiments")} style={{
-          backgroundColor: "#faf5ff",
+          backgroundColor: hexToRgba(theme.colors.accentPurple, 0.08),
           borderWidth: 1,
-          borderColor: "#e9d5ff",
+          borderColor: hexToRgba(theme.colors.accentPurple, 0.4),
           borderRadius: 16,
           padding: 18,
           flexDirection: "row",
           alignItems: "center",
-          shadowColor: "#7c3aed",
+          shadowColor: theme.colors.accentPurple,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.03,
           shadowRadius: 8,
           elevation: 2,
         }}>
-          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#f3e8ff", alignItems: "center", justifyContent: "center", marginRight: 16 }}>
-            <Ionicons name="flash" size={24} color="#7c3aed" />
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: hexToRgba(theme.colors.accentPurple, 0.12), alignItems: "center", justifyContent: "center", marginRight: 16 }}>
+            <Ionicons name="flash" size={24} color={theme.colors.accentPurple} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#6b21a8" }}>Physics Lab</Text>
-            <Text style={{ fontSize: 12, color: "#7e22ce", marginTop: 2 }}>Pendulums, Circuit Sandbox, Optics</Text>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: theme.colors.accentPurple }}>Physics Lab</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.accentPurple, marginTop: 2 }}>Pendulums, Circuit Sandbox, Optics</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#7c3aed" />
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textFaint} />
         </PremiumPressable>
 
         {/* BIOLOGY CARD */}
         <PremiumPressable onPress={() => navigation.navigate("BiologyExperiments")} style={{
-          backgroundColor: "#eff6ff",
+          backgroundColor: theme.colors.accentBlueSoft,
           borderWidth: 1,
-          borderColor: "#bfdbfe",
+          borderColor: hexToRgba(theme.colors.accentBlue, 0.4),
           borderRadius: 16,
           padding: 18,
           flexDirection: "row",
           alignItems: "center",
-          shadowColor: "#2563eb",
+          shadowColor: theme.colors.accentBlue,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.03,
           shadowRadius: 8,
           elevation: 2,
         }}>
-          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#dbeafe", alignItems: "center", justifyContent: "center", marginRight: 16 }}>
-            <Ionicons name="leaf" size={24} color="#2563eb" />
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: hexToRgba(theme.colors.accentBlue, 0.12), alignItems: "center", justifyContent: "center", marginRight: 16 }}>
+            <Ionicons name="leaf" size={24} color={theme.colors.accentBlue} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#1e40af" }}>Biology Lab</Text>
-            <Text style={{ fontSize: 12, color: "#1d4ed8", marginTop: 2 }}>Microscope Slides, Osmosis, Photosynthesis</Text>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: theme.colors.accentBlue }}>Biology Lab</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.accentBlue, marginTop: 2 }}>Microscope Slides, Osmosis, Photosynthesis</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#2563eb" />
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textFaint} />
         </PremiumPressable>
 
         <BannerAd />

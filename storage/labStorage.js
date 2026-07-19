@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { streakStorage } from './streakStorage';
 
 const LAB_REPORTS_PATH = `${FileSystem.documentDirectory}lab_reports.json`;
 
@@ -13,6 +14,7 @@ export const labStorage = {
       }
       reports.unshift(report);
       await FileSystem.writeAsStringAsync(LAB_REPORTS_PATH, JSON.stringify(reports));
+      streakStorage.recordActivity().catch(() => {});
       console.log("Lab report saved to phone memory.");
       return true;
     } catch (e) {

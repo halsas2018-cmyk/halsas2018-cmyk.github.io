@@ -9,6 +9,8 @@ import { ThemeProvider } from "./theme";
 import FirstRunModal from "./components/FirstRunModal";
 import FeedbackModal from "./components/FeedbackModal";
 import { feedbackStorage } from "./storage/feedbackStorage";
+import { initNotifications, applySettings } from "./components/NotificationManager";
+import { notificationStorage } from "./storage/notificationStorage";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -25,6 +27,12 @@ export default function App() {
   // non-blocking behavior — it previously gated the UI on a spinner).
   useEffect(() => {
     mobileAds().initialize().catch(() => {});
+  }, []);
+
+  // Notifications: register the handler and re-apply any enabled daily reminder.
+  useEffect(() => {
+    initNotifications();
+    notificationStorage.getSettings().then((s) => applySettings(s)).catch(() => {});
   }, []);
 
   // Ask for feedback on first launch (after a beat) and periodically after.

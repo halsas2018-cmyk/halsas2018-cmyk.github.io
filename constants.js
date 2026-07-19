@@ -165,7 +165,7 @@ export const SUBJECTS = [
 // ─── SESSION PRICES ────────────────────────────────────────────────────────────
 // Edit these to change tutorial booking prices
 export const YOUTUBE_URL = 'https://youtube.com/@scipractice';
-export const WEBSITE_URL = 'https://halsas2018-cmyk.github.io';
+export const WEBSITE_URL = 'https://scipractice.netlify.app/';
 // Topics gated behind a "watch a rewarded ad to unlock" flow.
 // Chemistry advanced (5) + Biology advanced (9) + Physics advanced (14).
 // NOTE: the Biology/Physics advanced sets are a proposed default — confirm/trim with owner.

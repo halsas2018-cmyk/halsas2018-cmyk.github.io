@@ -2,7 +2,9 @@ import React from "react";
 import { View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../theme";
 import { haptic } from "../haptic";
 import HomeScreen from "../screens/HomeScreen";
 import LabHubScreen from "../lab/LabHubScreen";
@@ -321,24 +323,40 @@ function LabStackNavigator() {
 }
 
 export default function TabNavigator() {
+  const tabNav = useNavigation();
+  const theme = useTheme();
   return (
     <Tab.Navigator
       screenListeners={{
-        tabPress: () => {
+        tabPress: (e) => {
           haptic.light();
+          // Always land on the subject-selection screen when entering Study
+          // Cards — deep links (e.g. "Continue learning") and any stale
+          // persisted stack state can otherwise strand the tab deep inside.
+          const tabName = e?.data?.route?.name;
+          if (tabName === "StudyHub") {
+            try {
+              tabNav.dispatch({
+                ...CommonActions.reset({
+                  routes: [{ name: "StudyHubScreen" }],
+                }),
+                target: "StudyHub",
+              });
+            } catch (err) {}
+          }
         },
       }}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: "#2563eb",
-        tabBarInactiveTintColor: "#6b7280",
+        tabBarActiveTintColor: theme.colors.accentBlue,
+        tabBarInactiveTintColor: theme.colors.textFaint,
         tabBarStyle: {
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 0,
           height: 70,
           paddingBottom: 12,
           paddingTop: 8,
-          shadowColor: "#000000",
+          shadowColor: theme.colors.primary,
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.06,
           shadowRadius: 12,
@@ -365,19 +383,19 @@ export default function TabNavigator() {
           if (focused) {
             return (
               <View style={{
-                backgroundColor: "#eff6ff",
+                backgroundColor: theme.colors.accentBlueSoft,
                 width: 48,
                 height: 30,
                 borderRadius: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                shadowColor: "#2563eb",
+                shadowColor: theme.colors.accentBlue,
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.12,
                 shadowRadius: 3,
                 elevation: 2,
               }}>
-                <Ionicons name={iconName} size={20} color="#2563eb" />
+                <Ionicons name={iconName} size={20} color={theme.colors.accentBlue} />
               </View>
             );
           }

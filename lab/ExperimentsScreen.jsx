@@ -4,26 +4,26 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import BannerAd from "../components/BannerAd";
 import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
-
-const GREEN = "#16a34a";
+import { useTheme, hexToRgba } from "../../theme";
 
 export default function ExperimentsScreen() {
   const navigation = useNavigation();
+  const theme = useTheme();
   const { unlockWithRewarded } = useAds();
   const route = useRoute();
   const { topicName, experiments } = route.params;
   const [soon, setSoon] = useState(null);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <View
         style={{
           paddingTop: 50,
           paddingHorizontal: 20,
           paddingBottom: 12,
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.colors.surface,
           borderBottomWidth: 1,
-          borderBottomColor: "#e5e7eb",
+          borderBottomColor: theme.colors.border,
           flexDirection: "row",
           alignItems: "center",
         }}
@@ -32,7 +32,7 @@ export default function ExperimentsScreen() {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={{ fontSize: 16, color: GREEN, fontWeight: "700" }}>‹ Back</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: "700" }}>‹ Back</Text>
         </TouchableOpacity>
         <Text
           style={{
@@ -40,7 +40,7 @@ export default function ExperimentsScreen() {
             textAlign: "center",
             fontSize: 16,
             fontWeight: "800",
-            color: "#111827",
+            color: theme.colors.text,
             marginRight: 40,
           }}
           numberOfLines={1}
@@ -50,7 +50,7 @@ export default function ExperimentsScreen() {
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-        <Text style={{ fontSize: 14, color: "#6b7280" }}>Practicals · coming soon</Text>
+        <Text style={{ fontSize: 14, color: theme.colors.textMuted }}>Practicals · coming soon</Text>
       </View>
 
       <FlatList
@@ -75,22 +75,22 @@ export default function ExperimentsScreen() {
               }
             }}
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: theme.colors.surface,
               borderRadius: 14,
               padding: 16,
               marginBottom: 12,
               borderWidth: 1,
-              borderColor: "#e5e7eb",
+              borderColor: theme.colors.border,
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#111827" }}>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: theme.colors.text }}>
               {exp.title}
             </Text>
             <View
               style={{
                 marginTop: 8,
                 alignSelf: "flex-start",
-                backgroundColor: exp.status === "interactive" ? "#dcfce7" : "#fef3c7",
+                backgroundColor: exp.status === "interactive" ? hexToRgba(theme.colors.primary, 0.12) : hexToRgba(theme.colors.star, 0.14),
                 paddingHorizontal: 10,
                 paddingVertical: 3,
                 borderRadius: 999,
@@ -99,7 +99,7 @@ export default function ExperimentsScreen() {
               <Text
                 style={{
                   fontSize: 11,
-                  color: exp.status === "interactive" ? "#166534" : "#92400e",
+                  color: exp.status === "interactive" ? theme.colors.primaryDark : theme.colors.star,
                   fontWeight: "700",
                 }}
               >
@@ -128,7 +128,7 @@ export default function ExperimentsScreen() {
         >
           <View
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: theme.colors.surface,
               borderTopLeftRadius: 22,
               borderTopRightRadius: 22,
               padding: 24,
@@ -139,7 +139,7 @@ export default function ExperimentsScreen() {
               style={{
                 width: 40,
                 height: 4,
-                backgroundColor: "#d1d5db",
+                backgroundColor: theme.colors.border,
                 borderRadius: 2,
                 alignSelf: "center",
                 marginBottom: 18,
@@ -151,7 +151,7 @@ export default function ExperimentsScreen() {
                 fontSize: 18,
                 fontWeight: "800",
                 textAlign: "center",
-                color: "#111827",
+                color: theme.colors.text,
                 marginTop: 8,
               }}
             >
@@ -161,7 +161,7 @@ export default function ExperimentsScreen() {
               style={{
                 fontSize: 15,
                 textAlign: "center",
-                color: "#374151",
+                color: theme.colors.textMuted,
                 marginTop: 6,
               }}
             >
@@ -171,7 +171,7 @@ export default function ExperimentsScreen() {
               style={{
                 fontSize: 13,
                 textAlign: "center",
-                color: "#6b7280",
+                color: theme.colors.textMuted,
                 marginTop: 10,
                 lineHeight: 19,
               }}
@@ -183,14 +183,14 @@ export default function ExperimentsScreen() {
               onPress={() => setSoon(null)}
               style={{
                 marginTop: 20,
-                backgroundColor: GREEN,
+                backgroundColor: theme.colors.primary,
                 borderRadius: 12,
                 paddingVertical: 14,
               }}
             >
               <Text
                 style={{
-                  color: "#ffffff",
+                  color: theme.colors.onPrimary,
                   textAlign: "center",
                   fontWeight: "700",
                   fontSize: 15,

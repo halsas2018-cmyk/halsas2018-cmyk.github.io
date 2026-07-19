@@ -4,22 +4,22 @@ import { useNavigation } from "@react-navigation/native";
 import chemistry from "./chemistry";
 import BannerAd from "../components/BannerAd";
 import { withInlineBanner } from "../components/inlineAd";
-
-const GREEN = "#16a34a";
+import { useTheme, hexToRgba } from "../../theme";
 
 export default function ChemistryExperimentsScreen() {
   const navigation = useNavigation();
+  const theme = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <View
         style={{
           paddingTop: 50,
           paddingHorizontal: 20,
           paddingBottom: 12,
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.colors.surface,
           borderBottomWidth: 1,
-          borderBottomColor: "#e5e7eb",
+          borderBottomColor: theme.colors.border,
           flexDirection: "row",
           alignItems: "center",
         }}
@@ -28,7 +28,7 @@ export default function ChemistryExperimentsScreen() {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={{ fontSize: 16, color: GREEN, fontWeight: "700" }}>‹ Back</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: "700" }}>‹ Back</Text>
         </TouchableOpacity>
         <Text
           style={{
@@ -36,7 +36,7 @@ export default function ChemistryExperimentsScreen() {
             textAlign: "center",
             fontSize: 18,
             fontWeight: "800",
-            color: "#111827",
+            color: theme.colors.text,
             marginRight: 40,
           }}
         >
@@ -45,7 +45,7 @@ export default function ChemistryExperimentsScreen() {
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-        <Text style={{ fontSize: 14, color: "#6b7280" }}>
+        <Text style={{ fontSize: 14, color: theme.colors.textMuted }}>
           Select a topic to view its practicals
         </Text>
       </View>
@@ -72,29 +72,29 @@ export default function ChemistryExperimentsScreen() {
               })
             }
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: theme.colors.surface,
               borderRadius: 14,
               padding: 16,
               marginBottom: 12,
               borderWidth: 1,
-              borderColor: "#bbf7d0",
+              borderColor: hexToRgba(theme.colors.primary, 0.35),
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
             }}
           >
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#111827" }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: theme.colors.text }}>
                 {topic.topicName}
               </Text>
               {(() => {
                 const ready = topic.experiments.filter((e) => e.status === "interactive").length;
                 return (
-                  <Text style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: theme.colors.textMuted, marginTop: 4 }}>
                     {topic.experiments.length} practical
                     {topic.experiments.length !== 1 ? "s" : ""}
                     {ready > 0 ? (
-                      <Text style={{ color: "#16a34a", fontWeight: "700" }}> · {ready} ready ▸</Text>
+                      <Text style={{ color: theme.colors.primary, fontWeight: "700" }}> · {ready} ready ▸</Text>
                     ) : (
                       " · coming soon"
                     )}
@@ -102,7 +102,7 @@ export default function ChemistryExperimentsScreen() {
                 );
               })()}
             </View>
-            <Text style={{ fontSize: 20, color: GREEN }}>›</Text>
+            <Text style={{ fontSize: 20, color: theme.colors.primary }}>›</Text>
           </TouchableOpacity>
           )
         )}

@@ -5,9 +5,11 @@ import { quizStorage } from '../storage/quizStorage';
 import BannerAd from '../components/BannerAd';
 import { withInlineBanner } from '../components/inlineAd';
 import { useAds } from '../components/AdProvider';
+import { useTheme } from '../theme';
 
 export default function HistoryScreen({ navigation }) {
   const { showResultView } = useAds();
+  const theme = useTheme();
   const [logs, setLogs] = useState([]);
   const [detail, setDetail] = useState(null);
 
@@ -26,15 +28,15 @@ export default function HistoryScreen({ navigation }) {
   }, [navigation]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bg }]} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.surface} translucent={false} />
       
       {/* Header Panel */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
+      <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: theme.colors.surfaceAlt }]}>
+          <Text style={[styles.backBtnText, { color: theme.colors.text }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Quiz Logs</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Quiz Logs</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -47,8 +49,8 @@ export default function HistoryScreen({ navigation }) {
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📊</Text>
-            <Text style={styles.emptyText}>No previous score logs found.</Text>
-            <Text style={styles.emptySubtext}>Complete a chemistry quiz subtopic to see your performance metrics tracked here.</Text>
+            <Text style={[styles.emptyText, { color: theme.colors.textMuted }]}>No previous score logs found.</Text>
+            <Text style={[styles.emptySubtext, { color: theme.colors.textFaint }]}>Complete a chemistry quiz subtopic to see your performance metrics tracked here.</Text>
           </View>
         )}
         renderItem={({ item: log, index }) => {
@@ -61,14 +63,14 @@ export default function HistoryScreen({ navigation }) {
           }
           const percentage = log.percentage !== undefined ? log.percentage : Math.round((log.score / log.total) * 100);
           return (
-            <TouchableOpacity key={log.id || index} style={styles.card} activeOpacity={0.8} onPress={() => showResultView(() => setDetail(log))}>
+            <TouchableOpacity key={log.id || index} style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} activeOpacity={0.8} onPress={() => showResultView(() => setDetail(log))}>
               <View style={styles.cardLeft}>
-                <Text style={styles.topicText}>{log.topicId ? log.topicId.replace(/_/g, ' ').toUpperCase() : 'UNKNOWN'}</Text>
-                <Text style={styles.dateText}>{log.date}</Text>
+                <Text style={[styles.topicText, { color: theme.colors.text }]}>{log.topicId ? log.topicId.replace(/_/g, ' ').toUpperCase() : 'UNKNOWN'}</Text>
+                <Text style={[styles.dateText, { color: theme.colors.textFaint }]}>{log.date}</Text>
               </View>
               <View style={styles.cardRight}>
-                <Text style={styles.scoreText}>{log.score} / {log.total}</Text>
-                <Text style={styles.percentText}>{percentage}%</Text>
+                <Text style={[styles.scoreText, { color: theme.colors.danger }]}>{log.score} / {log.total}</Text>
+                <Text style={[styles.percentText, { color: theme.colors.textMuted }]}>{percentage}%</Text>
               </View>
             </TouchableOpacity>
           );
@@ -77,16 +79,16 @@ export default function HistoryScreen({ navigation }) {
 
       <Modal visible={!!detail} transparent animationType="slide" onRequestClose={() => setDetail(null)}>
         <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }} activeOpacity={1} onPress={() => setDetail(null)}>
-          <View style={{ backgroundColor: "#fff", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 24, paddingBottom: 32 }}>
-            <View style={{ width: 40, height: 4, backgroundColor: "#d1d5db", borderRadius: 2, alignSelf: "center", marginBottom: 18 }} />
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#111827", textAlign: "center" }}>{detail ? String(detail.topicId).replace(/_/g, ' ').toUpperCase() : ""}</Text>
-            <Text style={{ fontSize: 13, color: "#94a3b8", textAlign: "center", marginTop: 4 }}>{detail?.date}</Text>
-            <View style={{ backgroundColor: "#f8fafc", borderRadius: 12, padding: 14, marginVertical: 16 }}>
-              <Text style={{ fontSize: 15, color: "#374151" }}>Score: <Text style={{ fontWeight: "800" }}>{detail?.score} / {detail?.total}</Text></Text>
-              <Text style={{ fontSize: 15, color: "#374151", marginTop: 6 }}>Percentage: <Text style={{ fontWeight: "800" }}>{detail ? Math.round((detail.score / detail.total) * 100) : 0}%</Text></Text>
+          <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 24, paddingBottom: 32 }}>
+            <View style={{ width: 40, height: 4, backgroundColor: theme.colors.border, borderRadius: 2, alignSelf: "center", marginBottom: 18 }} />
+            <Text style={{ fontSize: 18, fontWeight: "800", color: theme.colors.text, textAlign: "center" }}>{detail ? String(detail.topicId).replace(/_/g, ' ').toUpperCase() : ""}</Text>
+            <Text style={{ fontSize: 13, color: theme.colors.textFaint, textAlign: "center", marginTop: 4 }}>{detail?.date}</Text>
+            <View style={{ backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, padding: 14, marginVertical: 16 }}>
+              <Text style={{ fontSize: 15, color: theme.colors.textMuted }}>Score: <Text style={{ fontWeight: "800" }}>{detail?.score} / {detail?.total}</Text></Text>
+              <Text style={{ fontSize: 15, color: theme.colors.textMuted, marginTop: 6 }}>Percentage: <Text style={{ fontWeight: "800" }}>{detail ? Math.round((detail.score / detail.total) * 100) : 0}%</Text></Text>
             </View>
-            <TouchableOpacity onPress={() => setDetail(null)} style={{ backgroundColor: "#f1f5f9", borderRadius: 12, paddingVertical: 13 }}>
-              <Text style={{ color: "#0f172a", textAlign: "center", fontWeight: "700", fontSize: 14 }}>Close</Text>
+            <TouchableOpacity onPress={() => setDetail(null)} style={{ backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, paddingVertical: 13 }}>
+              <Text style={{ color: theme.colors.text, textAlign: "center", fontWeight: "700", fontSize: 14 }}>Close</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

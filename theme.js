@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Appearance } from "react-native";
+import { themeStorage } from "./storage/themeStorage";
 
 // ─── TOKENS ────────────────────────────────────────────────────────────────
 // Single source of truth for colors, type scale, spacing, radii and shadows.
@@ -130,17 +131,39 @@ const ThemeContext = createContext(light);
 
 export function ThemeProvider({ children }) {
   const scheme = Appearance.getColorScheme();
+  const [mode, setModeState] = useState("system"); // 'system' | 'light' | 'dark'
   const [isDark, setIsDark] = useState(scheme === "dark");
 
+  // Load the persisted preference on mount, then apply it.
   useEffect(() => {
-    const sub = Appearance.addChangeListener(({ colorScheme }) => {
-      setIsDark(colorScheme === "dark");
+    themeStorage.getMode().then((m) => {
+      setModeState(m);
+      setIsDark(m === "system" ? Appearance.getColorScheme() === "dark" : m === "dark");
     });
-    return () => sub.remove();
   }, []);
 
+  // Follow the OS only while in 'system' mode.
+  useEffect(() => {
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      if (mode === "system") setIsDark(colorScheme === "dark");
+    });
+    return () => sub.remove();
+  }, [mode]);
+
+  function setMode(next) {
+    setModeState(next);
+    themeStorage.setMode(next);
+    setIsDark(next === "system" ? Appearance.getColorScheme() === "dark" : next === "dark");
+  }
+
+  // Simple on/off flip: light <-> dark (never lands on 'system').
+  function toggleTheme() {
+    setMode(isDark ? "light" : "dark");
+  }
+
   const theme = isDark ? dark : light;
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  const value = { ...theme, mode, setMode, toggleTheme };
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

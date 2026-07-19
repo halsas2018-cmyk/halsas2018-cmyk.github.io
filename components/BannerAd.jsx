@@ -9,7 +9,19 @@ const BANNER_AD_UNIT_ID = __DEV__
 
 export default function BannerAd() {
   return (
-    <View style={{ alignItems: "center", marginVertical: 8 }}>
+    <View
+      style={{
+        alignItems: "center",
+        marginVertical: 8,
+        minHeight: 60,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(148,163,184,0.25)",
+        backgroundColor: "rgba(148,163,184,0.06)",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
       <RNBannerAd
         unitId={BANNER_AD_UNIT_ID}
         size={BannerAdSize.BANNER}

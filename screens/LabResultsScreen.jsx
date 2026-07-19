@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StatusBar, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme, hexToRgba } from "../theme";
 import { labStorage } from "../storage/labStorage";
 import BannerAd from "../components/BannerAd";
 import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
 
-const GREEN = "#16a34a";
-
 export default function LabResultsScreen() {
   const navigation = useNavigation();
+  const theme = useTheme();
   const { showResultView } = useAds();
   const [reports, setReports] = useState([]);
   const [open, setOpen] = useState(null);
@@ -28,8 +28,8 @@ export default function LabResultsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={["top", "left", "right"]}>
+      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.colors.bg} translucent={false} />
 
       <View
         style={{
@@ -37,15 +37,15 @@ export default function LabResultsScreen() {
           alignItems: "center",
           paddingHorizontal: 16,
           paddingVertical: 12,
-          backgroundColor: "#fff",
+          backgroundColor: theme.colors.surface,
           borderBottomWidth: 1,
-          borderBottomColor: "#e5e7eb",
+          borderBottomColor: theme.colors.border,
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Text style={{ fontSize: 16, color: GREEN, fontWeight: "700" }}>‹ Back</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: "700" }}>‹ Back</Text>
         </TouchableOpacity>
-        <Text style={{ flex: 1, textAlign: "center", fontSize: 16, fontWeight: "800", color: "#111827", marginRight: 40 }}>
+        <Text style={{ flex: 1, textAlign: "center", fontSize: 16, fontWeight: "800", color: theme.colors.text, marginRight: 40 }}>
           Lab Reports
         </Text>
       </View>
@@ -59,10 +59,10 @@ export default function LabResultsScreen() {
         ListEmptyComponent={() => (
           <View style={{ alignItems: "center", marginTop: 80, paddingHorizontal: 20 }}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>🧪</Text>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: "#475569", marginBottom: 6, textAlign: "center" }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: theme.colors.textMuted, marginBottom: 6, textAlign: "center" }}>
               No lab reports yet.
             </Text>
-            <Text style={{ fontSize: 14, color: "#94a3b8", textAlign: "center", lineHeight: 20 }}>
+            <Text style={{ fontSize: 14, color: theme.colors.textFaint, textAlign: "center", lineHeight: 20 }}>
               Complete a virtual experiment and save your report to see it here.
             </Text>
           </View>
@@ -77,23 +77,23 @@ export default function LabResultsScreen() {
             key={r.id}
             onPress={() => showResultView(() => setOpen(r))}
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: theme.colors.surface,
               borderRadius: 16,
               padding: 16,
               marginBottom: 12,
               borderWidth: 1,
-              borderColor: "#e2e8f0",
+              borderColor: theme.colors.border,
             }}
           >
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: "#0f172a", flex: 1, marginRight: 8 }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: theme.colors.text, flex: 1, marginRight: 8 }}>
                 {r.experimentTitle}
               </Text>
-              <View style={{ backgroundColor: "#dcfce7", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 }}>
-                <Text style={{ fontSize: 11, color: "#166534", fontWeight: "700" }}>PASSED</Text>
+              <View style={{ backgroundColor: hexToRgba(theme.colors.primary, 0.12), paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 }}>
+                <Text style={{ fontSize: 11, color: theme.colors.primaryDark, fontWeight: "700" }}>PASSED</Text>
               </View>
             </View>
-            <Text style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>
+            <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 6 }}>
               {r.summary ? r.summary + " · " : ""}{r.date}
             </Text>
           </TouchableOpacity>
@@ -103,22 +103,22 @@ export default function LabResultsScreen() {
 
       <Modal visible={!!open} transparent animationType="slide" onRequestClose={() => setOpen(null)}>
         <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }} activeOpacity={1} onPress={() => setOpen(null)}>
-          <View style={{ backgroundColor: "#fff", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 24, paddingBottom: 32 }}>
-            <View style={{ width: 40, height: 4, backgroundColor: "#d1d5db", borderRadius: 2, alignSelf: "center", marginBottom: 18 }} />
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#111827", textAlign: "center" }}>{open?.experimentTitle}</Text>
-            <Text style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", marginTop: 4 }}>{open?.date}</Text>
-            <View style={{ backgroundColor: "#f8fafc", borderRadius: 12, padding: 14, marginVertical: 16 }}>
+          <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 24, paddingBottom: 32 }}>
+            <View style={{ width: 40, height: 4, backgroundColor: theme.colors.border, borderRadius: 2, alignSelf: "center", marginBottom: 18 }} />
+            <Text style={{ fontSize: 18, fontWeight: "800", color: theme.colors.text, textAlign: "center" }}>{open?.experimentTitle}</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.textFaint, textAlign: "center", marginTop: 4 }}>{open?.date}</Text>
+            <View style={{ backgroundColor: theme.colors.bg, borderRadius: 12, padding: 14, marginVertical: 16 }}>
               {open ? reportDetails(open).map((d, i) => (
-                <Text key={i} style={{ fontSize: 13, color: "#374151", marginTop: i === 0 ? 0 : 6 }}>
+                <Text key={i} style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: i === 0 ? 0 : 6 }}>
                   • {d[0]}: <Text style={{ fontWeight: "800" }}>{d[1]}</Text>
                 </Text>
               )) : null}
             </View>
-            <TouchableOpacity onPress={() => remove(open.id)} style={{ backgroundColor: "#fef2f2", borderRadius: 12, paddingVertical: 13, borderWidth: 1, borderColor: "#fecaca" }}>
-              <Text style={{ color: "#dc2626", textAlign: "center", fontWeight: "700", fontSize: 14 }}>Delete Report</Text>
+            <TouchableOpacity onPress={() => remove(open.id)} style={{ backgroundColor: theme.colors.dangerSoft, borderRadius: 12, paddingVertical: 13, borderWidth: 1, borderColor: hexToRgba(theme.colors.danger, 0.4) }}>
+              <Text style={{ color: theme.colors.danger, textAlign: "center", fontWeight: "700", fontSize: 14 }}>Delete Report</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setOpen(null)} style={{ marginTop: 10, backgroundColor: "#f1f5f9", borderRadius: 12, paddingVertical: 13 }}>
-              <Text style={{ color: "#0f172a", textAlign: "center", fontWeight: "700", fontSize: 14 }}>Close</Text>
+            <TouchableOpacity onPress={() => setOpen(null)} style={{ marginTop: 10, backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, paddingVertical: 13 }}>
+              <Text style={{ color: theme.colors.text, textAlign: "center", fontWeight: "700", fontSize: 14 }}>Close</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

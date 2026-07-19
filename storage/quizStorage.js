@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { streakStorage } from './streakStorage';
 
 const HISTORY_FILE_PATH = `${FileSystem.documentDirectory}quiz_history_log.json`;
 
@@ -28,6 +29,7 @@ export const quizStorage = {
 
       history.unshift(newRecord);
       await FileSystem.writeAsStringAsync(HISTORY_FILE_PATH, JSON.stringify(history));
+      streakStorage.recordActivity().catch(() => {});
       console.log("Persistent score entry written successfully.");
       return true;
     } catch (error) {
