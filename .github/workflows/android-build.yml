@@ -76,4 +76,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SciPractice-Release-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          # Per-ABI splits (+ universal) live in this dir; upload all of them.
+          # app-arm64-v8a-release.apk is the small one for direct/GitHub downloads;
+          # app-universal-release.apk is the all-devices file for third-party stores.
+          path: android/app/build/outputs/apk/release/

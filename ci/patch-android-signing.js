@@ -69,5 +69,29 @@ if (content.includes(RELEASE_BLOCK_PATCHED)) {
   process.exit(1);
 }
 
+// 3) Enable per-ABI splits so CI emits per-architecture APKs instead of one
+// fat universal APK. `universalApk true` ALSO keeps a universal APK for stores
+// (e.g. Palm Store) that require a single all-devices file. Each split is still
+// signed with our release keystore (the `release` build type applies to all).
+const BUILD_TYPES_MARKER = '    buildTypes {';
+const SPLITS_BLOCK = `    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86_64"
+            universalApk true
+        }
+    }`;
+
+if (content.includes(SPLITS_BLOCK)) {
+  console.log('[patch-signing] ABI splits already present — skipping.');
+} else if (content.includes(BUILD_TYPES_MARKER)) {
+  content = content.replace(BUILD_TYPES_MARKER, `${SPLITS_BLOCK}\n\n${BUILD_TYPES_MARKER}`);
+  console.log('[patch-signing] added per-ABI splits block (universalApk true).');
+} else {
+  console.error('[patch-signing] ERROR: could not locate buildTypes block for splits injection.');
+  process.exit(1);
+}
+
 fs.writeFileSync(BUILD_GRADLE, content);
 console.log('[patch-signing] done.');
