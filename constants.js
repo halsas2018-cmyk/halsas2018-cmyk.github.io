@@ -28,6 +28,9 @@ export const SUBJECTS = [
       { id: "biochem", name: "Biochemistry and Polymers", subtopics: ["Proteins", "Carbohydrates", "Fats and oils"] },
       { id: "metals", name: "Metals and Their Compounds", subtopics: ["Extraction of metals", "Alloys", "Corrosion"] },
       { id: "practical", name: "Practical Chemistry", subtopics: ["Titrations", "Qualitative analysis", "Tests for gases"] },
+      { id: "energy", name: "Energy and Energy Changes", subtopics: ["Energy and enthalpy", "Exothermic and endothermic", "Enthalpy changes"] },
+      { id: "solubility", name: "Solubility of Substances", subtopics: ["Meaning of solubility", "Saturated and unsaturated", "Solubility curves", "Crystallization", "Solubility rules"] },
+      { id: "nonmetals", name: "Non-Metals and Their Compounds", subtopics: ["Carbon and allotropes", "Carbon (IV) oxide", "Oxygen", "Hydrogen", "Water and hardness", "Chlorine", "Ammonia", "Nitric acid and salts"] },
     ]
   },
   {

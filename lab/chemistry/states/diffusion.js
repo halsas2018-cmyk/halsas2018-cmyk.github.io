@@ -2,7 +2,8 @@ const diffusion = {
   id: "diffusion",
   topicId: "states",
   title: "Diffusion of Gases",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "StatesDiffusionPrep",
 };
 
 export default diffusion;

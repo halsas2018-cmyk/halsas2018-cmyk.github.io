@@ -13,6 +13,9 @@ import industry from "./industry/index.js";
 import biochem from "./biochem/index.js";
 import metals from "./metals/index.js";
 import practical from "./practical/index.js";
+import energy from "./energy/index.js";
+import solubility from "./solubility/index.js";
+import nonmetals from "./nonmetals/index.js";
 
 const topics = [
   { topicId: "intro", topicName: "Introduction to Chemistry", experiments: intro },
@@ -30,6 +33,9 @@ const topics = [
   { topicId: "biochem", topicName: "Biochemistry and Polymers", experiments: biochem },
   { topicId: "metals", topicName: "Metals and Their Compounds", experiments: metals },
   { topicId: "practical", topicName: "Practical Chemistry", experiments: practical },
+  { topicId: "energy", topicName: "Energy and Energy Changes", experiments: energy },
+  { topicId: "solubility", topicName: "Solubility of Substances", experiments: solubility },
+  { topicId: "nonmetals", topicName: "Non-Metals and Their Compounds", experiments: nonmetals },
 ];
 
 export default topics;

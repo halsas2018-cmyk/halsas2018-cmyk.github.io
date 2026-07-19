@@ -18,7 +18,8 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
 - React Navigation **v7** (`@react-navigation/native`, `/native-stack`, `/bottom-tabs`),
   with `react-native-screens` + `react-native-safe-area-context` peers.
 - Icons via `@expo/vector-icons`. File persistence via `expo-file-system/legacy`.
-- Ads via `react-native-google-mobile-ads` (see "Ads" section below).
+- SVG apparatus via `react-native-svg`. Ads via `react-native-google-mobile-ads`
+  (see "Ads" section below).
 - Plain JS / JSX (no TypeScript).
 
 > **Migration note:** the new architecture (navigation/screens/lab/study/storage +
@@ -27,20 +28,121 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
 > the missing nav/file-system/icon packages were added at SDK-56-compatible versions.
 
 ## File structure (only what matters)
-- `navigation/RootNavigator.jsx` — root stack: `MainTabs`, `TopicsScreen`, `QuizScreen`, `ResultScreen`, `HistoryScreen`.
-- `navigation/TabNavigator.jsx` — bottom tabs: `PracticeHub`(HomeScreen), `LabHub`(nested Lab stack), `StudyHub`, `ExamsHub`. **Add lab screens here.**
-- `lab/LabHubScreen.jsx` — Virtual Lab hub (Chemistry / Physics / Biology / Book-a-Tutor cards). Physics & Biology cards navigate to their experiment browsers; Chemistry opens its browser directly.
-- `lab/ChemistryExperimentsScreen.jsx` / `lab/BiologyExperimentsScreen.jsx` / `lab/PhysicsExperimentsScreen.jsx` → `lab/ExperimentsScreen.jsx` — subject experiment browsers: LabHub → topic list → experiment list → "Coming Soon" sheet (or "READY ▸" for interactive experiments).
-- `lab/chemistry/<topicId>/<experimentId>.js` — **one file per experiment**; `lab/chemistry/<topicId>/index.js` aggregates a topic; `lab/chemistry/index.js` aggregates all 15 topics → `[{ topicId, topicName, experiments }]` (35 experiments, title-only, `status:"coming-soon"`). The same shape is mirrored under `lab/biology/` (58 topics) and `lab/physics/` (41 topics), each with one `coming-soon` experiment per topic.
-- `constants.js` — `SUBJECTS`: Chemistry (15 topics, live — `comingSoon:false`), Biology (58 topics, live — `comingSoon:false`), Physics (41 topics, live — `comingSoon:false`, ≈2,200 questions). All topic `id`s match the question/lab keys. Also `LOCKED_TOPICS` (advanced topics gated behind a rewarded ad — Chemistry 5 + Biology 9 + Physics 14), `WHATSAPP_NUMBER`, `SESSION_PRICES`.
-- `questions/chemistry/<topicId>.js` — one file per topic (array, `module.exports`, `const questions = [...]`); `questions/index.js` aggregates into `QUESTIONS` keyed by topic id. `questions/biology/` (58 files, ≈2,900 questions) and `questions/physics/` (41 files, ≈2,200 questions) follow the same pattern. Per-subject aggregators `questions/<subject>/index.js` also exist. (Old monoliths `chemistry.js`/`biology.js`/`physics.js` were deleted.)
-- `screens/` — HomeScreen, TopicsScreen, QuizScreen, ResultScreen, HistoryScreen, ExamsHubScreen.
-- `components/` — BookingModal, AdBanner. `study/`, `storage/` — study cards + quiz persistence.
+- `navigation/RootNavigator.jsx` — root stack: `MainTabs`, `TopicsScreen`, `QuizScreen`,
+  `ResultScreen`, `HistoryScreen`, `ExamScreen`, `AboutScreen`.
+- `navigation/TabNavigator.jsx` — bottom tabs: `PracticeHub`(HomeScreen), `LabHub`(nested
+  Lab stack), `StudyHub`(nested Study stack), `ExamsHub`. **Add lab screens here.**
+- `lab/LabHubScreen.jsx` — Virtual Lab hub (Chemistry / Physics / Biology / Book-a-Tutor
+  cards). Physics & Biology cards navigate to their experiment browsers; Chemistry opens
+  its browser directly.
+- `lab/ChemistryExperimentsScreen.jsx` / `lab/BiologyExperimentsScreen.jsx` /
+  `lab/PhysicsExperimentsScreen.jsx` → `lab/ExperimentsScreen.jsx` — subject experiment
+  browsers: LabHub → topic list → experiment list → "Coming Soon" sheet (or "READY ▸" for
+  interactive experiments).
+- `lab/chemistry/<topicId>/<experimentId>.js` — **one file per experiment**
+  (`status:"coming-soon"` or `status:"interactive"` + `screen`). `lab/chemistry/<topicId>/index.js`
+  aggregates a topic; `lab/chemistry/index.js` aggregates all topics →
+  `[{ topicId, topicName, experiments }]`. Same shape under `lab/biology/` (58 topics) and
+  `lab/physics/` (41 topics). **54 interactive sims are built** (Chemistry 26, Physics 18,
+  Biology 10 — see "Building a lab" below); every other topic ships one `status:"coming-soon"`
+  experiment. Apparatus is vector-drawn via `lab/components/svgKit.jsx` (shared kit).
+- `constants.js` — `SUBJECTS`: Chemistry (**18 topics** — incl. `energy`/`solubility`/`nonmetals`
+  added to match the question bank), Biology (58 topics), Physics (41 topics). All
+  topic `id`s match the question/lab keys. Also `LOCKED_TOPICS` (advanced topics gated behind
+  a rewarded ad — Chemistry 5 + Biology 9 + Physics 14 = 28), `WHATSAPP_NUMBER`,
+  `SESSION_PRICES`, `YOUTUBE_URL`, `WEBSITE_URL`.
+- `questions/chemistry/<topicId>.js` — one file per topic (array, `module.exports`,
+  `const <topicId> = [...]`, each Q = `{ question, options:["A. …","B. …","C. …","D. …"],
+  answer:"A", explanation, subtopic }`); `questions/<subject>/index.js` aggregates into
+  `QUESTIONS` keyed by topic id, and the top-level `questions/index.js` re-aggregates all
+  three. `questions/biology/` (58 files, ≈2,900 questions) and `questions/physics/` (41 files,
+  ≈2,200 questions) follow the same pattern.
+  - **Legacy monoliths — do NOT import at boot:** `questions/chemistry.js` has been deleted.
+    `questions/biology.js`/`questions/physics.js` remain as empty placeholder stubs (legacy,
+    no data). The per-topic files + `questions/<subject>/index.js` aggregators are the
+    authoritative source. Never add a static top-level `import` of these into a screen in the
+    startup import graph.
+- `screens/` — HomeScreen, TopicsScreen, QuizScreen, ResultScreen, HistoryScreen,
+  ExamsHubScreen, **ExamScreen** (timed full-syllabus mock exam), **AboutScreen**,
+  **LabResultsScreen** (saved lab reports).
+- `study/` — **Study Cards tab** (see "Study Cards tab" below). `StudyHubScreen` →
+  `StudyTopicsScreen` → `StudySubtopicsScreen` → `StudyCardScreen`. `studyData.js` = hexToRgba
+  + lazy bank loader; `study/registry.js` is AUTO-GENERATED by `scripts/genStudyRegistry.js`
+  (maps `"subject/topic"` → literal require of that topic's `index.js`). Per-subject content
+  under `study/<subject>/<topicId>/<Subtopic>.js`.
+- `components/` — BookingModal, AdBanner (unused reference), AdProvider, BannerAd, RewardedAd,
+  InterstitialAd, RewardedInterstitialAd, inlineAd, **FeedbackModal**, **FirstRunModal**,
+  **ui.jsx** (shared premium primitives). `storage/` — quizStorage, labStorage, studyStorage,
+  **feedbackStorage**, **streakStorage**.
+- `theme.js` — `ThemeProvider` + `useTheme()` (light/dark via `Appearance`); `hexToRgba(hex,a)`
+  exported. `haptic.js` — `haptic.light()/medium()/heavy()/success()/error()`.
+- `App.js` — mounts `ThemeProvider` → `AdProvider` → `NavigationContainer(RootNavigator)`, runs
+  a `SplashScreen` fade, fires `mobileAds().initialize()` in the background (non-blocking), and
+  renders `FirstRunModal` + `FeedbackModal`. Navigation is fully React-Navigation-driven
+  (`scipractice.jsx` at root is dead — see DEAD CODE).
+
+## Study Cards tab
+- **Subject picker is always reachable.** `StudyHubScreen` (subject picker, shows
+  completed/total subtopics per subject) → `StudyTopicsScreen` (topics, per-topic completion)
+  → `StudySubtopicsScreen` (subtopics, shows `New` / `↺ Resume` / `✓ Done`) →
+  `StudyCardScreen` (the swipeable deck).
+- **Deck (`StudyCardScreen`):** horizontal `ScrollView pagingEnabled`; each card is a premium
+  white card. Animated **fill slider** shows progress; a `StudyCard` sub-component springs when
+  active. Prev/Next + "Mark subtopic done" on the last card.
+- **Resume memory:** `storage/studyStorage.js` stores `study_progress.json` keyed
+  `"subject::topic::subtopic"` → `{ cardIndex, completed }`. On open the deck snaps to the last
+  `cardIndex` reached. `markComplete` pops a celebration modal.
+- **Content authoring:** one file per subtopic under `study/<subject>/<topicId>/`, each
+  default-exporting an array of `{ heading, body }` cards (rich textbook-depth, 6–14 cards,
+  each `body` a 3–6 sentence paragraph). `<topicId>/index.js` maps the **exact constants.js
+  subtopic string** → that array. **Card-file/index imports must use explicit `.js` extensions**
+  (Node-verifiable *and* Metro-OK). Regenerate the registry after adding topics:
+  `node scripts/genStudyRegistry.js`. Content is authored for all three subjects (Chemistry 18
+  topics, Biology 58, Physics 41).
+
+## Premium design system (theme + shared components)
+- **`theme.js`** — single source of truth for colors/radii/shadows/type. Every screen does
+  `const theme = useTheme();` and uses `theme.colors.bg`/`surface`/`text`/`border`/`primary`,
+  `theme.shadow*`, `theme.radius.*`, `theme.space.*`. **Never hardcode `#f9fafb`/white/hex in
+  new code — use `theme.colors.*`.** `theme.isDark` flips the scheme.
+- **`haptic.js`** — `import { haptic } from "haptic"`; `haptic.light()/medium()/heavy()` on
+  taps, `haptic.success()/error()` on outcomes. Safe no-ops when unsupported (no-ops in the
+  headless sandbox — verify on a real phone).
+- **`components/ui.jsx`** — shared premium primitives (import from `components/ui`):
+  `Pressable` (scale-on-press, fires `haptic.light()` automatically — replaces flat
+  `TouchableOpacity`), `Gradient` (`expo-linear-gradient`), `BlurCard` (`expo-blur`),
+  `ProgressRing` (SVG circle — syllabus-coverage rings), `Confetti` (celebration on quiz pass),
+  `SkeletonCard` (shimmer while a lazy bank loads).
+- **`components/FeedbackModal.jsx`** — "Support us with your feedback" sheet (rate / WhatsApp).
+  Mounted in `App.js`; gated by `storage/feedbackStorage.js` — shows on first launch ~1.5s after
+  open, then re-prompts at most weekly or every 5 launches.
+- **`storage/streakStorage.js`** — `getState()` / `recordActivity()` for the daily-streak pill
+  (`DAILY_GOAL = 10`). Call `recordActivity()` on quiz/lab completion.
+- **`components/FirstRunModal.jsx`** — 1-time welcome sheet (self-gated by `first_run_done.json`).
+- **Dark mode is live:** root `backgroundColor: theme.colors.bg`, `StatusBar` barStyle follows
+  `theme.isDark`. `App.js` wraps everything in `ThemeProvider` and does a `SplashScreen` fade.
+- **HomeScreen (Practice tab):** translucent single-color header, three **circular stat bubbles**
+  (Questions / Labs / Day streak), a "Continue learning" row, "Recommended next", subject cards,
+  action tiles. Card shadows are primary-tinted (`shadowColor: theme.colors.primary`), not black.
+
+## Final Exams
+The `ExamsHub` tab picks a subject → `ExamScreen` (registered in `RootNavigator`, same lazy
+subject-bank loader as `QuizScreen`) samples questions across **all** topics.
+- `EXAM_PRESETS` in `ExamScreen.jsx`: Chemistry / Biology / Physics each **45q / 30m** (accent
+  green / blue / purple). A **"Complete Final Exam"** combined mode runs all 3 subjects, **40q
+  each = 120q / 60m** (`ExamScreen` called with `{ combined: true }`).
+- Timer auto-submits at 0. Progress is a **scrollable dot-per-question row** (gray=unanswered,
+  accent+larger=current, green/red=answered). `ExamScreen` uses translucent header/pill colors
+  via `hexToRgba`.
+- Routes to `ResultScreen` with `examMode:true` (+ `combined`, `subjectId:"Combined"`). Result
+  handles exam mode and saves under `<Subject> Final Exam` / `Combined Final Exam` so it appears
+  in `HistoryScreen`. "Back" returns to the `ExamsHub` **tab** (not `navigate('ExamsHub')` — it's
+  a tab, not a root screen).
 
 ## DEAD CODE — do not touch
 `scipractice.jsx` is **not used**. `App.js` mounts `RootNavigator` (confirmed), so all
 navigation is React-Navigation-driven (RootNavigator → TabNavigator). Don't edit
-`scipractice.jsx` and don't assume quiz logic lives there. (It is kept only as a
+`scipractice.jsx` and don't assume quiz logic lives there. (It is kept at repo root only as a
 reference for the old single-file ad wiring — see the Ads section.)
 
 ## Ads (react-native-google-mobile-ads)
@@ -54,26 +156,32 @@ screen). Unit IDs use `__DEV__ ? TestIds.X : "<real id>"`.
   `BannerAd` on every screen — native units need an approved *Native*-typed AdMob unit and
   frequently return zero fill on new accounts. Kept only as a reference.
 - `components/BannerAd.jsx` — real **banner ad** (`BannerAd` + `BannerAdSize.BANNER`),
-  shown on Home, Result, and ALL scrollable list screens — Topics, StudyHub, ExamsHub,
-  LabHub, **Experiments (experiment selection)**, History, LabResults. On list screens it is
-  rendered MID-list (via `withInlineBanner` in `components/inlineAd.js`) so it's visible
-  without scrolling to the footer; on Home/Result it sits mid-content. Banner unit ID
-  `ca-app-pub-2857595249161834/9387356261` (`__DEV__` → `TestIds.BANNER`).
+  shown on Home, Result, all 4 tabs, every topic-selection screen (Practice Topics, the
+  Chemistry/Physics/Biology experiment browsers, StudyTopics, the Experiments list),
+  StudySubtopics, StudyCard (small, while studying), History, and LabResults. On list
+  screens it is rendered MID-list (via `withInlineBanner` in `components/inlineAd.js`) so
+  it's visible without scrolling to the footer; on Home/Result/StudyCard it sits
+  mid-content. Banner unit ID `ca-app-pub-2857595249161834/9387356261`
+  (`__DEV__` → `TestIds.BANNER`).
 - `components/RewardedAd.jsx` / `InterstitialAd.jsx` / `RewardedInterstitialAd.jsx` — hooks
   `useRewardedAd` / `useInterstitialAd` / `useRewardedInterstitial`. All five ad unit IDs
   are now used (see `ADS_IMPLEMENTATION_NOTES.md`).
-- **Banners** (real `BannerAd`): Home (mid-content), Result (mid-content), and every
-  scrollable list screen — Topics, StudyHub, ExamsHub, LabHub, Experiments, History,
-  LabResults — rendered mid-list. NOT on the Quiz screen or inside a running lab sim.
+- **Banners** (real `BannerAd`): Home (mid-content), Result (mid-content); all 4 tabs
+  (Home, LabHub, StudyHub, ExamsHub); every topic-selection screen (Practice Topics, the
+  Chemistry/Physics/Biology experiment browsers, StudyTopics, and the Experiments list);
+  StudySubtopics; StudyCard (a small banner above the controls, shown *while studying*);
+  History + LabResults — list screens rendered mid-list via `withInlineBanner`. NOT on the
+  Quiz screen, the Exam screen, or inside a running lab sim.
 - **Rewarded unlock** (`useRewardedAd`): `LOCKED_TOPICS` advanced topics in `TopicsScreen`,
   and **ALL lab simulations** in `ExperimentsScreen` — every interactive `exp.screen` tap is
   wrapped in `unlockWithRewarded` (tap → watch rewarded ad → start sim). This gates every
   playable virtual lab; "coming soon" experiments just open a sheet (no sim to gate).
 - **Interstitial** (`useInterstitialAd`, **no time cooldown** — served on session count):
-  quiz finish → Result (every 4th session), Result → Topics (every 3rd tap), Final Exam
-  launch.
-- **Rewarded-interstitial** (`useRewardedInterstitial`, **no time cooldown**): tapping a
-  past quiz result (History) or lab report (LabResults) before viewing.
+  quiz finish → Result (every 4th session), Result → Topics (every 3rd tap).
+- **Rewarded-interstitial** (`useRewardedInterstitial`, **no time cooldown**): **Final Exam
+  launch** (`showExamLaunch` — must-watch, preloaded + reloaded on close, proceeds on close so
+  the exam always launches); and tapping a past quiz result (History) or lab report
+  (LabResults) before viewing.
 - `LOCKED_TOPICS` (constants.js) = Chemistry 5 + Biology 9 + Physics 14 advanced topics
   (proposed set — confirm with owner). Gate = watch-a-rewarded-ad, NOT payment;
   WhatsApp/SESSION_PRICES are tutor booking only.
@@ -217,10 +325,88 @@ default-exports `{ id, topicId, title, status, screen? }`:
 - `lab/titration/FlipCard.jsx` — reusable tappable briefing card.
 - `lab/titration/TitrationPrep.jsx` — wizard: flip-card briefing → choose
   apparatus → choose reagents/indicator → volume + endpoint calculator → "Start".
-- `lab/chemistry/<topic>/<Experiment>.jsx` — the actual animated simulation.
+- `lab/chemistry/<topic>/<ExpName>Lab.jsx` — the actual animated simulation.
+  Adopted naming: prep = `<ExpName>Prep.jsx`, sim = `<ExpName>Lab.jsx`, both with
+  **UNIQUE, app-wide, topic-prefixed** names (e.g. `MetalsExtractionPrep` /
+  `MetalsExtractionLab`). The older titration/rate labs use `…Experiment` for the sim
+  (`TitrationExperiment`, `RateExperiment`) — either convention is fine, just be consistent
+  within a new lab and keep names unique.
+- `lab/chemistry/<topic>/<topic>-data.js` — per-topic shared data + chemistry helpers
+  (mirrors `lab/titration/reagents.js`); both the prep and the sim import from it.
+  The titration/rate labs keep their own `reagents.js` / `rateData.js`.
 - `screens/LabResultsScreen.jsx` — lists saved reports.
 - `storage/labStorage.js` — `saveReport` / `getAllReports` / `deleteReport`
   (writes `lab_reports.json` via `expo-file-system/legacy`, mirrors `quizStorage`).
+
+**Interactive labs built so far** (each is `<ExpName>Prep.jsx` + `<ExpName>Lab.jsx` +
+`<topic>-data.js`):
+- Chemistry (26): titration (`TitrationPrep`/`TitrationExperiment` +
+  `lab/chemistry/acids/TitrationExperiment.jsx`), kinetics (`RatePrep`/`RateExperiment`,
+  `lab/chemistry/kinetics/`), metals (`MetalsExtraction*`, `MetalsReactivity*`,
+  `MetalsRusting*`), redox (`RedoxElectroplating*`, `RedoxDisplacement*`), separation
+  (`SepChromatography*`, `SepDistillation*`, `SepFiltration*`), states
+  (`StatesDiffusion*`, `StatesGasLaws*`), energy (`EnergyCalorimetryPrep`/`EnergyCalorimetryLab`,
+  `lab/chemistry/energy/`), acids (`AcidsSaltPrepPrep`/`AcidsSaltPrepLab`,
+  `lab/chemistry/acids/`), stoich (`StoichMassMolePrep`/`StoichMassMoleLab`,
+  `lab/chemistry/stoich/`), bonding (`BondIonicPrep`/`BondIonicLab`,
+  `lab/chemistry/bonding/`), solubility (`SolubilityCrystalPrep`/`SolubilityCrystalLab`,
+  `lab/chemistry/solubility/`), biochem (`BiochemEnzymePrep`/`BiochemEnzymeLab`,
+  `lab/chemistry/biochem/`), **ion tests (`ChemIonTestsPrep`/`ChemIonTestsLab`,
+  `lab/chemistry/acids/`), gas tests (`ChemGasTestsPrep`/`ChemGasTestsLab`,
+  `lab/chemistry/practical/`), bromine water (`ChemBromineWaterPrep`/`ChemBromineWaterLab`,
+  `lab/chemistry/organic/`), group 1 reactivity (`ChemGroup1Prep`/`ChemGroup1Lab`,
+  `lab/chemistry/periodic/`), standard solution (`ChemStandardSolutionPrep`/`ChemStandardSolutionLab`,
+  `lab/chemistry/stoich/`), oxygen prep (`ChemOxygenPrep`/`ChemOxygenLab`,
+  `lab/chemistry/nonmetals/`), soap (`ChemSoapPrep`/`ChemSoapLab`,
+  `lab/chemistry/industry/`), electrolysis (`ChemElectrolysisPrep`/`ChemElectrolysisLab`,
+  `lab/chemistry/bonding/`)**.
+- Physics (18): projectile (`PhysicsProjectilePrep`/`PhysicsProjectileLab`,
+  `lab/physics/all-projectile/`), pendulum/SHM (`PhysicsPendulumPrep`/`PhysicsPendulumLab`,
+  `lab/physics/p1-shm/`), refraction (`PhysicsRefractionPrep`/`PhysicsRefractionLab`,
+  `lab/physics/p3-light-waves/`), circuits/Ohm's law (`PhysicsCircuitPrep`/`PhysicsCircuitLab`,
+  `lab/physics/p5-ac-circuits/`), specific heat capacity (`PhysicsHeatCapacityPrep`/`PhysicsHeatCapacityLab`,
+  `lab/physics/p2-heat-energy/`), equilibrium of forces (`PhysicsForcesPrep`/`PhysicsForcesLab`,
+  `lab/physics/p1-equilibrium-forces/`), newton's 2nd law (`PhysicsNewtons2Prep`/`PhysicsNewtons2Lab`,
+  `lab/physics/p1-newtons-laws/`), work & energy (`PhysicsWorkEnergyPrep`/`PhysicsWorkEnergyLab`,
+  `lab/physics/p2-work-energy-power/`), sound & resonance (`PhysicsSoundPrep`/`PhysicsSoundLab`,
+  `lab/physics/p3-sound-waves/`), elastic solids/Hooke's law (`PhysicsHookePrep`/`PhysicsHookeLab`,
+  `lab/physics/all-elastic-solids/`), **lens focal length (`PhysLensFocalPrep`/`PhysLensFocalLab`,
+  `lab/physics/p3-light-waves/`), laws of reflection (`PhysReflectionPrep`/`PhysReflectionLab`,
+  `lab/physics/p3-light-waves/`), centre of gravity (`PhysCentreGravityPrep`/`PhysCentreGravityLab`,
+  `lab/physics/p1-equilibrium-forces/`), principle of moments (`PhysMomentsPrep`/`PhysMomentsLab`,
+  `lab/physics/p1-equilibrium-forces/`), loaded spring (`PhysLoadedSpringPrep`/`PhysLoadedSpringLab`,
+  `lab/physics/p1-shm/`), peak & RMS (`PhysPeakRmsPrep`/`PhysPeakRmsLab`,
+  `lab/physics/p5-ac-circuits/`), LCR resonance (`PhysLcrResonancePrep`/`PhysLcrResonanceLab`,
+  `lab/physics/p5-ac-circuits/`), latent heat of fusion (`PhysLatentFusionPrep`/`PhysLatentFusionLab`,
+  `lab/physics/p2-heat-energy/`)**.
+- Biology (10): osmosis (`BioOsmosisPrep`/`BioOsmosisLab`, `lab/biology/secA-cell-environment/`),
+  photosynthesis (`BioPhotosynthesisPrep`/`BioPhotosynthesisLab`, `lab/biology/secA-plant-nutrition/`),
+  food tests (`BioFoodTestsPrep`/`BioFoodTestsLab`, `lab/biology/secA-animal-nutrition/`),
+  breathing & CO₂ (`BioBreathingPrep`/`BioBreathingLab`, `lab/biology/secA-respiratory-system/`),
+  genetics/Punnett (`BioGeneticsPunnettPrep`/`BioGeneticsPunnettLab`,
+  `lab/biology/secA-genetics-probability/`), transport/transpiration (`BioTransportTranspirationPrep`/`BioTransportTranspirationLab`,
+  `lab/biology/secA-transport/`), **cell structure (`BioCellStructurePrep`/`BioCellStructureLab`,
+  `lab/biology/secA-cell-structure/`), classification (`BioClassificationPrep`/`BioClassificationLab`,
+  `lab/biology/secA-classification/`), food webs (`BioFoodWebsPrep`/`BioFoodWebsLab`,
+  `lab/biology/secA-food-webs/`), ecosystem (`BioEcosystemPrep`/`BioEcosystemLab`,
+  `lab/biology/secA-ecosystem/`)**.
+
+**Coverage expansion:** all three subjects ship 2–3 experiments per topic (was 1 for most
+physics/biology topics). `scripts/scaffoldPhysicsLabs.js` and `scripts/scaffoldBiologyLabs.js`
+append syllabus-relevant `coming-soon` experiments (idempotent, re-runnable). Chemistry lab
+dirs cover all 18 constants topics (`energy`, `solubility`, `nonmetals` each ship 3
+`coming-soon` experiments).
+
+**Lab drawing — use the shared SVG kit (not `<View>` boxes).** Apparatus and diagrams are
+vector-drawn with `react-native-svg`. `lab/components/svgKit.jsx` exports reusable components —
+`Beaker`, `ConicalFlask`, `TestTube`, `Burette`, `GasJar`, `Syringe`, `BunsenBurner`, `Funnel`,
+`FilterPaper`, `Condenser`, `RetortStand`, `MetalStrip`, `Nail`, `ElectrodeCell`,
+`PendulumStand`/`PendulumBob`, `Launcher`/`Projectile`/`Ground`/`Trajectory`,
+`RayBox`/`GlassBlock`/`LightRay`/`NormalLine`/`Protractor`, `Battery`/`Bulb`/`Resistor`/`Switch`/
+`Ammeter`/`Wire`, `CellMembrane`, `Chloroplast`, `LeafSection`, plus helpers
+`Arrow`/`Label`/`Thermometer`. Labs import via `../../components/svgKit` and compose scenes from
+these. Keep each lab's existing `Animated.View` + `transform` wrappers for moving parts (SVG
+inside them). Do NOT draw apparatus with stacked `<View>` rectangles.
 
 **Wiring a new interactive experiment:**
 1. Create the experiment `.jsx` screen (e.g. `lab/chemistry/acids/TitrationExperiment.jsx`).
@@ -253,12 +439,19 @@ default-exports `{ id, topicId, title, status, screen? }`:
 - **Inputs + keyboard:** wrap the screen in `KeyboardAvoidingView`
   (`behavior: Platform.OS === "ios" ? "padding" : "height"`) and set
   `keyboardShouldPersistTaps="handled"` on the ScrollView, or the keyboard hides
-  the field and blurs on every tap.
+  the field and blurs on every tap. This applies to EVERY screen that renders a
+  `TextInput` — **including the report modal inside a Lab sim**.
+- **Report modal timing:** on success, set `status:"success"` and keep the final
+  animated stage visible, with the existing "📝 View Report" button. Do NOT call
+  `setReportOpen(true)` inside the success handler — that auto-pops the report
+  before the user can watch the final state. Open the report only when the user
+  presses the button (verify each lab has exactly one `setReportOpen(true)`, on the
+  "📝 View Report" button, not inside a success handler).
 - Animated `transform: [{ rotateY }]` is not supported by the native driver —
   use `useNativeDriver:false` for it, and keep `translate`/`scale`/`rotate(deg)`
   on the native driver.
 
-
+## Token-efficient working style
 - **Scaffold many files with a Node script** that `require`s the source and writes files — keep large source files OUT of context entirely.
 - Inspect structure with `grep` / `wc` / `head` / `tail` (bash), never `Read` on big files.
 - Prefer `Edit` over `Write` (smaller diffs; the tool tracks file state, so don't re-read files you just wrote/edited).
@@ -268,10 +461,13 @@ default-exports `{ id, topicId, title, status, screen? }`:
 
 ## Verify / run
 - Structural + data verification is done by importing aggregators; visual confirmation needs `expo start` (or `/run`). RN UI can't run headlessly in this environment.
-
----
-
-## Syllabus references
-The WAEC syllabus extractions that seeded the `constants.js` topic trees are
-archived in `BIOLOGY_TOPICS.md` and `PHYSICS_TOPICS.md` (repo root). They are
-historical — the authoritative topic list now lives in `constants.js` `SUBJECTS`.
+- **Headless full-bundle check:** `npx expo export --platform ios` runs the real Metro
+  bundler and resolves every `import`/`require` across the app — the closest thing to a
+  build without a device. A clean run to `N/N modules` proves all code compiles and
+  links. The final **Hermes bytecode step may fail with `hermesc ... SIGILL`** in this
+  PRoot sandbox — that's the Hermes *compiler binary* crashing on the emulated CPU, NOT a
+  code error; it does not occur on a real machine or in an EAS build.
+- **Debugging JS/JSX syntax errors efficiently:** do NOT read the whole file — Babel already
+  prints the exact `line:col`. Find a stray brace fast with a `node -e` script that counts
+  `{` vs `}` and prints per-line deltas, then parse suspect files with `@babel/parser`
+  (`plugins:["jsx"]`) in a loop. Only `Read` a file once the script has named the exact line.

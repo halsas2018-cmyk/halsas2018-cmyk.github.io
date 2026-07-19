@@ -1,23 +1,61 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Animated } from "react-native";
 import mobileAds from "react-native-google-mobile-ads";
 import { NavigationContainer } from "@react-navigation/native";
+import * as SplashScreen from "expo-splash-screen";
 import { AdProvider } from "./components/AdProvider";
 import RootNavigator from "./navigation/RootNavigator";
+import { ThemeProvider } from "./theme";
+import FirstRunModal from "./components/FirstRunModal";
+import FeedbackModal from "./components/FeedbackModal";
+import { feedbackStorage } from "./storage/feedbackStorage";
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
+  const [fade] = useState(() => new Animated.Value(0));
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+
   useEffect(() => {
-    // Initialize the Google Mobile Ads SDK in the BACKGROUND. We deliberately do
-    // NOT block the UI on this: GMA init can take a few seconds on first launch
-    // (it was previously gating the whole app behind a spinner, causing a
-    // multi-second white screen). Ads simply populate once the SDK is ready.
+    Animated.timing(fade, { toValue: 1, duration: 420, useNativeDriver: true }).start();
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  // Initialize the Google Mobile Ads SDK in the BACKGROUND (keep Backup's
+  // non-blocking behavior — it previously gated the UI on a spinner).
+  useEffect(() => {
     mobileAds().initialize().catch(() => {});
   }, []);
 
+  // Ask for feedback on first launch (after a beat) and periodically after.
+  useEffect(() => {
+    let timer;
+    (async () => {
+      await feedbackStorage.recordLaunch();
+      const should = await feedbackStorage.shouldPrompt();
+      if (!should) return;
+      timer = setTimeout(() => setFeedbackVisible(true), 1500);
+    })();
+    return () => timer && clearTimeout(timer);
+  }, []);
+
   return (
-    <AdProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-    </AdProvider>
+    <ThemeProvider>
+      <AdProvider>
+        <Animated.View style={{ flex: 1, opacity: fade }}>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+          <FirstRunModal />
+          <FeedbackModal
+            visible={feedbackVisible}
+            onClose={() => {
+              setFeedbackVisible(false);
+              feedbackStorage.markPrompted();
+            }}
+          />
+        </Animated.View>
+      </AdProvider>
+    </ThemeProvider>
   );
 }

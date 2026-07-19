@@ -2,7 +2,8 @@ const secA_food_webs = {
   id: "secA-food-webs",
   topicId: "secA-food-webs",
   title: "Building Food Webs & Pyramids",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "BioFoodWebsPrep",
 };
 
 export default secA_food_webs;

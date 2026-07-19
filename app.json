@@ -6,6 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sas26steam.scipractice"
@@ -33,6 +38,7 @@
           "iosAppId": "ca-app-pub-2857595249161834~2471996491"
         }
       ],
+      "plugins/withUnityMediation.js",
       [
         "expo-build-properties",
         {
@@ -42,7 +48,8 @@
         }
       ],
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-splash-screen"
     ],
     "owner": "sci2026"
   }

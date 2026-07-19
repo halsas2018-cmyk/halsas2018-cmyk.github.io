@@ -2,7 +2,8 @@ const extraction = {
   id: "extraction",
   topicId: "metals",
   title: "Extraction of Metals",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "MetalsExtractionPrep",
 };
 
 export default extraction;

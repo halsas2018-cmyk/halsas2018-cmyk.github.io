@@ -2,7 +2,8 @@ const chromatography = {
   id: "chromatography",
   topicId: "separation",
   title: "Paper Chromatography",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "SepChromatographyPrep",
 };
 
 export default chromatography;

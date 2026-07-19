@@ -1,8 +1,9 @@
 const p5_ac_circuits = {
   id: "p5-ac-circuits",
   topicId: "p5-ac-circuits",
-  title: "AC Circuits: Peak & RMS",
-  status: "coming-soon",
+  title: "Electric Circuits: Ohm's Law",
+  status: "interactive",
+  screen: "PhysicsCircuitPrep",
 };
 
 export default p5_ac_circuits;

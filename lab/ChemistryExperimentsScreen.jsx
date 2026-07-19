@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import chemistry from "./chemistry";
+import BannerAd from "../components/BannerAd";
+import { withInlineBanner } from "../components/inlineAd";
 
 const GREEN = "#16a34a";
 
@@ -49,12 +51,17 @@ export default function ChemistryExperimentsScreen() {
       </View>
 
       <FlatList
-        data={chemistry}
-        keyExtractor={(item) => item.topicId}
+        data={withInlineBanner(chemistry, 4)}
+        keyExtractor={(item) => item.topicId || item.id}
         initialNumToRender={10}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item: topic }) => (
+          topic.__bannerAd ? (
+            <View key={topic.id} style={{ marginVertical: 8 }}>
+              <BannerAd />
+            </View>
+          ) : (
           <TouchableOpacity
             key={topic.topicId}
             onPress={() =>
@@ -97,6 +104,7 @@ export default function ChemistryExperimentsScreen() {
             </View>
             <Text style={{ fontSize: 20, color: GREEN }}>›</Text>
           </TouchableOpacity>
+          )
         )}
       />
     </View>

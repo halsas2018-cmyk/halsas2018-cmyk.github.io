@@ -2,7 +2,8 @@ const electroplating = {
   id: "electroplating",
   topicId: "redox",
   title: "Electroplating",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "RedoxElectroplatingPrep",
 };
 
 export default electroplating;

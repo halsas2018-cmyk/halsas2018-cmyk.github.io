@@ -28,7 +28,10 @@ export function AdProvider({ children }) {
   const { showAd: showTopicsInt } = useInterstitialAd(() => {
     topicsDone.current && topicsDone.current();
   });
-  const { showAd: showExamInt } = useInterstitialAd(() => {
+  // Final Exam launch uses a REWARDED (rewarded-interstitial) format. It still
+  // proceeds on close so the exam always launches, and it's preloaded on init +
+  // reloaded after each close (see RewardedInterstitialAd.jsx) so it's ready.
+  const { showAd: showExamRewarded } = useRewardedInterstitial(() => {
     examDone.current && examDone.current();
   });
 
@@ -64,10 +67,10 @@ export function AdProvider({ children }) {
     }
   };
 
-  // Launching a Final Exam
+  // Launching a Final Exam — rewarded (must-watch) ad, then launch
   const showExamLaunch = (onDone) => {
     examDone.current = onDone;
-    showExamInt();
+    showExamRewarded();
   };
 
   // Viewing a previous result (History / Lab report) — rewarded-interstitial

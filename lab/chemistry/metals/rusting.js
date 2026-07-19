@@ -2,7 +2,8 @@ const rusting = {
   id: "rusting",
   topicId: "metals",
   title: "Rusting & Corrosion Prevention",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "MetalsRustingPrep",
 };
 
 export default rusting;

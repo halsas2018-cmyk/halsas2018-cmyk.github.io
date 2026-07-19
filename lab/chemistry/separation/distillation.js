@@ -2,7 +2,8 @@ const distillation = {
   id: "distillation",
   topicId: "separation",
   title: "Fractional Distillation",
-  status: "coming-soon",
+  status: "interactive",
+  screen: "SepDistillationPrep",
 };
 
 export default distillation;
