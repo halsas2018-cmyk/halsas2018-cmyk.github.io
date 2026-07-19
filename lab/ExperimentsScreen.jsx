@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import BannerAd from "../components/BannerAd";
 import { withInlineBanner } from "../components/inlineAd";
 import { useAds } from "../components/AdProvider";
-import { useTheme, hexToRgba } from "../../theme";
+import { useTheme, hexToRgba } from "../theme";
 
 export default function ExperimentsScreen() {
   const navigation = useNavigation();

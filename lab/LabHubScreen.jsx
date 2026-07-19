@@ -14,7 +14,7 @@ import BookingModal from "../components/BookingModal";
 import BannerAd from "../components/BannerAd";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useTheme, hexToRgba } from "../../theme";
+import { useTheme, hexToRgba } from "../theme";
 
 // Premium pressable with haptic-like scale effect on click
 function PremiumPressable({ onPress, style, children, disabled }) {

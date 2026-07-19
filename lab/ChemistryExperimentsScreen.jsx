@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import chemistry from "./chemistry";
 import BannerAd from "../components/BannerAd";
 import { withInlineBanner } from "../components/inlineAd";
-import { useTheme, hexToRgba } from "../../theme";
+import { useTheme, hexToRgba } from "../theme";
 
 export default function ChemistryExperimentsScreen() {
   const navigation = useNavigation();

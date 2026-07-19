@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../theme";
+import { useTheme } from "../theme";
 import { haptic } from "../haptic";
 import HomeScreen from "../screens/HomeScreen";
 import LabHubScreen from "../lab/LabHubScreen";
