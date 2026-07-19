@@ -70,7 +70,20 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          # The Gradle wrapper downloads the Gradle distribution from
+          # services.gradle.org, which intermittently times out on
+          # GitHub-hosted runners (transient network). Retry a few times,
+          # clearing any partial download between attempts, before failing.
+          for i in 1 2 3; do
+            if ./gradlew assembleRelease --no-daemon; then
+              exit 0
+            fi
+            echo "Gradle attempt $i failed; clearing partial download and retrying..."
+            rm -rf "${GRADLE_USER_HOME:-$HOME/.gradle}/wrapper/dists/gradle-9.3.1-bin" 2>/dev/null || true
+            sleep 8
+          done
+          echo "::error::Gradle build failed after 3 attempts"
+          exit 1
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
