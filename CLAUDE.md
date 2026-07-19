@@ -72,10 +72,11 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
   under `study/<subject>/<topicId>/<Subtopic>.js`.
 - `components/` — BookingModal, AdBanner (unused reference), AdProvider, BannerAd, RewardedAd,
   InterstitialAd, RewardedInterstitialAd, inlineAd, **FeedbackModal**, **FirstRunModal**,
-  **ui.jsx** (shared premium primitives). `storage/` — quizStorage, labStorage, studyStorage,
-  **feedbackStorage**, **streakStorage**.
-- `theme.js` — `ThemeProvider` + `useTheme()` (light/dark via `Appearance`); `hexToRgba(hex,a)`
-  exported. `haptic.js` — `haptic.light()/medium()/heavy()/success()/error()`.
+  **ui.jsx** (shared premium primitives), **NotificationManager** (daily local reminders).
+  `storage/` — quizStorage, labStorage, studyStorage, **feedbackStorage**, **streakStorage**,
+  **notificationStorage** (reminder on/off + time), **themeStorage** (appearance mode).
+- `theme.js` — `ThemeProvider` + `useTheme()` (light/dark + manual `mode` persisted via
+  `storage/themeStorage.js`); `hexToRgba(hex,a)` exported. `haptic.js` — `haptic.light()/medium()/heavy()/success()/error()`.
 - `App.js` — mounts `ThemeProvider` → `AdProvider` → `NavigationContainer(RootNavigator)`, runs
   a `SplashScreen` fade, fires `mobileAds().initialize()` in the background (non-blocking), and
   renders `FirstRunModal` + `FeedbackModal`. Navigation is fully React-Navigation-driven
