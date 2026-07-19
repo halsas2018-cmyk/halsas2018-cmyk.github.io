@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { RewardedAd, RewardedAdEventType, AdEventType, TestIds, mobileAds } from "react-native-google-mobile-ads";
+import { RewardedAd, RewardedAdEventType, AdEventType, TestIds, MobileAds as mobileAds } from "react-native-google-mobile-ads";
 
 const AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED
