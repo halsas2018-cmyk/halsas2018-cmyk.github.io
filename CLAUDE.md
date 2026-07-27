@@ -124,9 +124,15 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
 - **`storage/streakStorage.js`** — `getState()` / `recordActivity()` for the daily-streak pill
   (`DAILY_GOAL = 10`). `recordActivity()` is wired into the shared save paths so the streak counts
   automatically: `quizStorage.saveResult` (covers quiz + exam), `labStorage.saveReport` (covers all
-  labs), and `studyStorage.markComplete`. HomeScreen shows the streak pill + a "Day streak" stat
-  bubble (reads `streakStorage.getState()`).
-- **`components/FirstRunModal.jsx`** — 1-time welcome sheet (self-gated by `first_run_done.json`).
+  labs), and `studyStorage.markComplete`. `recordActivity()` also tracks the **best-ever** streak
+  (`s.best`), so `getBest()` finally returns a real value (it was defined-but-uncalled before).
+  HomeScreen shows the streak pill (`🔥 N-day streak · best M` when a best exists) + a "Day streak"
+  stat bubble, and AboutScreen shows a "Best streak" card (both read `streakStorage.getState()`).
+  HomeScreen re-reads streak + question/lab stats in a `useFocusEffect` (NOT only on mount) so the
+  counts refresh when you tab back to Home after finishing a quiz/lab — do NOT downgrade to a
+  mount-only `useEffect` or the pills go stale.
+- **`components/FirstRunModal.jsx`** — 1-time welcome sheet (self-gated by `first_run_done.json`,
+  also persists the picked subjects as `prefs.subjects` — see "Onboarding subject picks" below).
 - **Daily reminders (notifications):** `components/NotificationManager.jsx` + `storage/notificationStorage.js`
   schedule a daily local notification (default 7 PM) via `expo-notifications`. The enable toggle is in
   `screens/AboutScreen.jsx`; `App.js` inits the handler and re-applies the persisted setting on boot.
@@ -143,6 +149,27 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
 - **HomeScreen (Practice tab):** translucent single-color header, three **circular stat bubbles**
   (Questions / Labs / Day streak), a "Continue learning" row, "Recommended next", subject cards,
   action tiles. Card shadows are primary-tinted (`shadowColor: theme.colors.primary`), not black.
+  Subject cards are re-ordered so the subjects picked in the FirstRun welcome sheet render first
+  (see "Onboarding subject picks"). Stats load in `useFocusEffect`, not mount-only.
+
+## Onboarding subject picks
+- `FirstRunModal` saves the picked subjects to `first_run_done.json` as `prefs.subjects`. They are
+  now HONORED (previously the sheet was decorative — the picks were stored but never read):
+  - `study/studyData.js` exports `getOnboardingSubjects()` (reads `first_run_done.json`, resolves
+    to `[]` when unset/skipped).
+  - `recommendNext()` (no explicit `subjectId`) iterates picked subjects first, then any unpicked
+    subject, so nothing is unreachable. Returns natural array order when none picked (no behavior
+    change). With an explicit `subjectId` it narrows to that subject as before.
+  - `HomeScreen` renders picked subjects first via an `orderedSubjects` derivation.
+  If you add a subject-aware "Recommended next" / ordering call, prefer `recommendNext` and
+  `getOnboardingSubjects` so the onboarding choice stays honored — don't bypass them.
+
+## Quiz length chooser
+- `TopicsScreen` renders a per-topic segmented control (**Quick 5 / Standard 10 / Marathon 20**)
+  above the Practice button and passes the chosen `quizLength` to `QuizScreen` via route params.
+  `QuizScreen` clamps it to `[1, 30]` (`Math.min(Math.max(parseInt(quizLength,10)||5, 1), 30)`)
+  and defaults to 5 when omitted — so any direct `navigation.navigate("QuizScreen", …)` that
+  doesn't pass `quizLength` keeps the old 5-question behaviour (ExamScreen is unaffected).
 
 ## Final Exams
 The `ExamsHub` tab picks a subject → `ExamScreen` (registered in `RootNavigator`, same lazy
@@ -377,9 +404,10 @@ default-exports `{ id, topicId, title, status, screen? }`:
 - `lab/chemistry/<topic>/<ExpName>Lab.jsx` — the actual animated simulation.
   Adopted naming: prep = `<ExpName>Prep.jsx`, sim = `<ExpName>Lab.jsx`, both with
   **UNIQUE, app-wide, topic-prefixed** names (e.g. `MetalsExtractionPrep` /
-  `MetalsExtractionLab`). The older titration/rate labs use `…Experiment` for the sim
-  (`TitrationExperiment`, `RateExperiment`) — either convention is fine, just be consistent
-  within a new lab and keep names unique.
+  `MetalsExtractionLab`). ALL interactive sims now use `…Lab` for the sim screen
+  (the titration/kinetics sims were renamed from `…Experiment` to `TitrationLab` /
+  `RateLab` — both file and screen name — so there is no longer a split convention;
+  do NOT reintroduce `…Experiment` for new sims). Keep names unique.
 - `lab/chemistry/<topic>/<topic>-data.js` — per-topic shared data + chemistry helpers
   (mirrors `lab/titration/reagents.js`); both the prep and the sim import from it.
   The titration/rate labs keep their own `reagents.js` / `rateData.js`.
@@ -389,8 +417,8 @@ default-exports `{ id, topicId, title, status, screen? }`:
 
 **Interactive labs built so far** (each is `<ExpName>Prep.jsx` + `<ExpName>Lab.jsx` +
 `<topic>-data.js`):
-- Chemistry (26): titration (`TitrationPrep`/`TitrationExperiment` +
-  `lab/chemistry/acids/TitrationExperiment.jsx`), kinetics (`RatePrep`/`RateExperiment`,
+- Chemistry (26): titration (`TitrationPrep`/`TitrationLab` +
+  `lab/chemistry/acids/TitrationLab.jsx`), kinetics (`RatePrep`/`RateLab`,
   `lab/chemistry/kinetics/`), metals (`MetalsExtraction*`, `MetalsReactivity*`,
   `MetalsRusting*`), redox (`RedoxElectroplating*`, `RedoxDisplacement*`), separation
   (`SepChromatography*`, `SepDistillation*`, `SepFiltration*`), states
@@ -458,7 +486,7 @@ these. Keep each lab's existing `Animated.View` + `transform` wrappers for movin
 inside them). Do NOT draw apparatus with stacked `<View>` rectangles.
 
 **Wiring a new interactive experiment:**
-1. Create the experiment `.jsx` screen (e.g. `lab/chemistry/acids/TitrationExperiment.jsx`).
+1. Create the experiment `.jsx` screen (e.g. `lab/chemistry/acids/TitrationLab.jsx`).
 2. Register it (and any prep screen) in the **LabStack** inside
    `navigation/TabNavigator.jsx` with a UNIQUE name. Subject browser screens
    (`ChemistryExperiments`, `BiologyExperiments`, `PhysicsExperiments`) and the
@@ -468,8 +496,8 @@ inside them). Do NOT draw apparatus with stacked `<View>` rectangles.
    `screen:"<PrepScreenName>"`. `ExperimentsScreen` routes any interactive
    experiment to `navigation.navigate(exp.screen, { experiment, topicId, topicName })`
    — so `screen` must name the **prep** screen you registered. The prep screen
-   then navigates to its own sim screen (e.g. `TitrationPrep` → `TitrationExperiment`,
-   `RatePrep` → `RateExperiment`) passing a `config` object.
+   then navigates to its own sim screen (e.g. `TitrationPrep` → `TitrationLab`,
+   `RatePrep` → `RateLab`) passing a `config` object.
 
 **Simulation screen conventions:**
 - Pass config via `route.params` (experiment, topicId, and a `config` object with
