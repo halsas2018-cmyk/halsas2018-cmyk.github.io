@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import s from "../styles";
 import { SUBJECTS, WHATSAPP_NUMBER, YOUTUBE_URL, WEBSITE_URL } from "../constants";
 import BookingModal from "../components/BookingModal";
@@ -19,7 +20,7 @@ import { streakStorage } from "../storage/streakStorage";
 import { studyStorage } from "../storage/studyStorage";
 import { quizStorage } from "../storage/quizStorage";
 import { labStorage } from "../storage/labStorage";
-import { recommendNext } from "../study/studyData";
+import { recommendNext, getOnboardingSubjects } from "../study/studyData";
 
 function PremiumPressable({ onPress, style, children, disabled }) {
   const scaleValue = useRef(new Animated.Value(1)).current;
@@ -72,9 +73,11 @@ export default function HomeScreen({ navigation }) {
   const [studentName, setStudentName] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
   const [stats, setStats] = useState({ questions: 0, labs: 0 });
   const [continueEntry, setContinueEntry] = useState(null);
   const [recommended, setRecommended] = useState(null);
+  const [pickedSubjects, setPickedSubjects] = useState([]);
 
   function openBooking(topicName) {
     setBookingTopic(topicName);
@@ -93,8 +96,14 @@ export default function HomeScreen({ navigation }) {
     setBookingVisible(false);
   }
 
-  useEffect(() => {
-    streakStorage.getState().then((st) => setStreak(st.count || 0));
+  // Re-read stats every time Home is focused (not only on mount). React
+  // Navigation keeps tab screens mounted, so a mount-only useEffect would
+  // show stale streak / question / lab counts after finishing a quiz or lab.
+  const loadHomeData = useCallback(() => {
+    streakStorage.getState().then((st) => {
+      setStreak(st.count || 0);
+      setBestStreak(st.best || 0);
+    });
     quizStorage.getAllResults().then((records) => {
       const q = (records || []).reduce((n, r) => n + (r.total || 0), 0);
       labStorage.getAllReports().then((reps) => {
@@ -124,7 +133,20 @@ export default function HomeScreen({ navigation }) {
       setContinueEntry(best);
     });
     recommendNext().then((r) => setRecommended(r));
+    getOnboardingSubjects().then((s) => setPickedSubjects(s || []));
   }, []);
+
+  useFocusEffect(loadHomeData);
+
+  // Render picked subjects first (from the FirstRun welcome sheet), then the
+  // rest in their natural order. Ties keep SUBJECTS array order — stable.
+  const orderedSubjects = (() => {
+    if (!pickedSubjects.length) return SUBJECTS;
+    const pickedLower = pickedSubjects.map((p) => String(p).toLowerCase());
+    const picked = SUBJECTS.filter((s) => pickedLower.includes(String(s.id).toLowerCase()));
+    const rest = SUBJECTS.filter((s) => !pickedLower.includes(String(s.id).toLowerCase()));
+    return [...picked, ...rest];
+  })();
 
   const cardShadow = {
     shadowColor: theme.colors.primary,
@@ -172,7 +194,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             {streak > 0 ? (
               <View style={{ backgroundColor: theme.colors.starSoft, paddingVertical: 3, paddingHorizontal: 10, borderRadius: 20 }}>
-                <Text style={{ color: theme.colors.star, fontWeight: "700", fontSize: 11 }}>🔥 {streak}-day streak</Text>
+                <Text style={{ color: theme.colors.star, fontWeight: "700", fontSize: 11 }}>🔥 {streak}-day streak{bestStreak > streak ? ` · best ${bestStreak}` : ""}</Text>
               </View>
             ) : null}
           </View>
@@ -305,7 +327,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={[s.sectionLabel, { letterSpacing: 0.8, fontWeight: "700", opacity: 0.7, paddingHorizontal: 16, marginTop: 22 }]}>CHOOSE A SUBJECT</Text>
 
         <View style={{ paddingHorizontal: 16 }}>
-          {SUBJECTS.map((sub) => (
+          {orderedSubjects.map((sub) => (
             <PremiumPressable
               key={sub.id}
               disabled={sub.comingSoon}

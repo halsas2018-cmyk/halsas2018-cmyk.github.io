@@ -11,7 +11,8 @@ export default function ExperimentsScreen() {
   const theme = useTheme();
   const { unlockWithRewarded } = useAds();
   const route = useRoute();
-  const { topicName, experiments } = route.params;
+  const { topicName, experiments } = route.params || {};
+  const list = Array.isArray(experiments) ? experiments : [];
   const [soon, setSoon] = useState(null);
 
   return (
@@ -54,7 +55,7 @@ export default function ExperimentsScreen() {
       </View>
 
       <FlatList
-        data={withInlineBanner(experiments, 3)}
+        data={withInlineBanner(list, 3)}
         keyExtractor={(item) => item.id}
         initialNumToRender={10}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }}

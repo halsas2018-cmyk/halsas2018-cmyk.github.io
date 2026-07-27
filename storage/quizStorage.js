@@ -19,7 +19,7 @@ export const quizStorage = {
 
       const percentage = Math.round((score / total) * 100);
       const newRecord = {
-        id: Date.now().toString(),
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         topicId: topicId || "General Chemistry",
         score: score,
         total: total,

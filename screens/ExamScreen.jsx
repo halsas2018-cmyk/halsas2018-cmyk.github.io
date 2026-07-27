@@ -77,6 +77,10 @@ export default function ExamScreen({ route, navigation }) {
 
   const finishedRef = useRef(false);
   const dotsRef = useRef(null);
+  // Keep the latest answers so finishExam (which can fire from the timer
+  // effect's stale closure at time=0) always scores against the real history.
+  const answersRef = useRef([]);
+  useEffect(() => { answersRef.current = answersHistory; }, [answersHistory]);
 
   // Build the exam: the whole bank (single subject) or 40 from each subject
   // (combined), all shuffled.
@@ -125,8 +129,12 @@ export default function ExamScreen({ route, navigation }) {
   const finishExam = () => {
     if (finishedRef.current) return;
     finishedRef.current = true;
+    // Score from the ref'd answersHistory (not the `score` state, which the
+    // timer effect's closure can lag — e.g. student answers Q120 just as the
+    // clock hits 0).
+    const finalScore = (answersRef.current || []).filter((a) => a.correct).length;
     navigation.navigate("ResultScreen", {
-      score,
+      score: finalScore,
       total: questions.length,
       subjectId: combined ? "Combined" : subjectId,
       examMode: true,

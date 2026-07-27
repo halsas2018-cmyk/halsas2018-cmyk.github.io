@@ -7,6 +7,7 @@ import { haptic } from "../haptic";
 import { Pressable } from "../components/ui";
 import { notificationStorage } from "../storage/notificationStorage";
 import { applySettings } from "../components/NotificationManager";
+import { streakStorage } from "../storage/streakStorage";
 
 const BULLETS = [
   ["📚", "Built from the standard science curriculum", "Every topic, subtopic and question follows the core secondary-school general science syllabus."],
@@ -19,9 +20,11 @@ export default function AboutScreen({ navigation }) {
   const theme = useTheme();
   const version = (Constants.expoConfig && Constants.expoConfig.version) || Constants.manifest?.version || "1.0.0";
   const [reminderOn, setReminderOn] = useState(false);
+  const [bestStreak, setBestStreak] = useState(0);
 
   useEffect(() => {
     notificationStorage.getSettings().then((s) => setReminderOn(s.enabled));
+    streakStorage.getState().then((st) => setBestStreak(st.best || 0));
   }, []);
 
   async function toggleReminder(value) {
@@ -97,6 +100,15 @@ export default function AboutScreen({ navigation }) {
             trackColor={{ false: theme.colors.border, true: theme.colors.primarySoft }}
             ios_backgroundColor={theme.colors.border}
           />
+        </View>
+
+        {/* Best-ever streak — read from streakStorage. */}
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: theme.colors.text }}>Best streak</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.textMuted, marginTop: 2 }}>Your longest run of consecutive study days 🔥</Text>
+          </View>
+          <Text style={{ fontSize: 22, fontWeight: "900", color: theme.colors.star }}>{bestStreak}</Text>
         </View>
 
         {BULLETS.map(([icon, title, body]) => (

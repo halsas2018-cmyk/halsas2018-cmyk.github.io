@@ -1,6 +1,25 @@
+import * as FileSystem from "expo-file-system/legacy";
 import { SUBJECTS } from "../constants";
 import registry from "./registry";
 import { studyStorage } from "../storage/studyStorage";
+
+const FIRST_RUN_PATH = `${FileSystem.documentDirectory}first_run_done.json`;
+
+// The subjects a student ticked in the FirstRun welcome sheet, persisted as
+// { done, prefs: { subjects: ["Chemistry", ...] } }. Used to prioritise the
+// "Recommended next" pick and the Home subject order. Returns [] when unset.
+export function getOnboardingSubjects() {
+  return FileSystem.getInfoAsync(FIRST_RUN_PATH)
+    .then((info) => {
+      if (!info.exists) return [];
+      return FileSystem.readAsStringAsync(FIRST_RUN_PATH)
+        .then((c) => {
+          const v = JSON.parse(c || "{}");
+          return (v && v.prefs && Array.isArray(v.prefs.subjects)) ? v.prefs.subjects : [];
+        });
+    })
+    .catch(() => []);
+}
 
 // Reused everywhere for translucent tints without adding a gradient dependency.
 export function hexToRgba(hex, alpha) {
@@ -113,22 +132,41 @@ export function buildCards(subjectId, topicId, subtopic) {
 // Returns a Promise resolving to { subjectId, topicId, subtopic } or null
 // (null = everything is complete). If subjectId is given, only that subject.
 export function recommendNext(subjectId) {
-  const subs = subjectId
+  // When called across all subjects (no subjectId), honour the subjects the
+  // student picked at onboarding: iterate picked subjects first, then fall
+  // back to any unpicked non-coming-soon subject so nothing is unreachable.
+  const baseSubs = subjectId
     ? SUBJECTS.filter((s) => s.id.toLowerCase() === String(subjectId).toLowerCase())
     : SUBJECTS.filter((s) => !s.comingSoon);
-  return studyStorage.getAll().then((all) => {
-    for (const s of subs) {
-      for (const t of s.topics || []) {
-        const subs2 =
-          t.subtopics && t.subtopics.length ? t.subtopics : [t.name || t.id];
-        for (const st of subs2) {
-          const k = `${s.id}::${t.id}::${st}`;
-          if (!all[k] || !all[k].completed) {
-            return { subjectId: s.id, topicId: t.id, subtopic: st };
+
+  const pickOrder = (allSubs) => {
+    if (subjectId || allSubs.length <= 1) return allSubs;
+    // getOnboardingSubjects resolves to [] when the student skipped/denied —
+    // in which case we keep the natural array order (no behaviour change).
+    return getOnboardingSubjects().then((picked) => {
+      if (!picked.length) return allSubs;
+      const pickedIds = picked.map((p) => p.toLowerCase());
+      const pickedSubs = allSubs.filter((s) => pickedIds.includes(String(s.id).toLowerCase()));
+      const rest = allSubs.filter((s) => !pickedIds.includes(String(s.id).toLowerCase()));
+      return [...pickedSubs, ...rest];
+    });
+  };
+
+  return Promise.resolve(pickOrder(baseSubs)).then((subs) =>
+    studyStorage.getAll().then((all) => {
+      for (const s of subs) {
+        for (const t of s.topics || []) {
+          const subs2 =
+            t.subtopics && t.subtopics.length ? t.subtopics : [t.name || t.id];
+          for (const st of subs2) {
+            const k = `${s.id}::${t.id}::${st}`;
+            if (!all[k] || !all[k].completed) {
+              return { subjectId: s.id, topicId: t.id, subtopic: st };
+            }
           }
         }
       }
-    }
-    return null;
-  });
+      return null;
+    })
+  );
 }

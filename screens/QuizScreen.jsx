@@ -30,10 +30,10 @@ function getQUESTIONS(subjectId) {
 }
 
 export default function QuizScreen({ route, navigation }) {
-  const { subjectId, topicId, topicTitle } = route.params || {};
+  const { subjectId, topicId, topicTitle, quizLength } = route.params || {};
   const { maybeQuizComplete } = useAds();
   const theme = useTheme();
-  
+
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -62,7 +62,11 @@ export default function QuizScreen({ route, navigation }) {
 
     if (pool.length > 0) {
       const randomized = [...pool].sort(() => 0.5 - Math.random());
-      setQuestions(randomized.slice(0, 5));
+      // quizLength is set by the per-topic chooser on TopicsScreen
+      // (Quick 5 / Standard 10 / Marathon 20). Default to 5 for backwards
+      // compatibility and for any direct navigation that omits it.
+      const len = Math.min(Math.max(parseInt(quizLength, 10) || 5, 1), 30);
+      setQuestions(randomized.slice(0, len));
     } else {
       setQuestions([]);
     }
@@ -71,7 +75,8 @@ export default function QuizScreen({ route, navigation }) {
 
   useEffect(() => {
     initializeQuiz();
-  }, [topicId, topicTitle]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicId, topicTitle, quizLength]);
 
   useEffect(() => {
     if (route.params?.resetQuizState) {
@@ -126,8 +131,13 @@ export default function QuizScreen({ route, navigation }) {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
+      // Derive score from answersHistory rather than the `score` state — the
+      // state read here belongs to the current render and can lag the final
+      // answer if React batches the last setScore. answersHistory is the
+      // source of truth for what was actually answered.
+      const finalScore = answersHistory.filter((a) => a.correct).length;
       maybeQuizComplete(() => navigation.replace("ResultScreen", {
-        score: score,
+        score: finalScore,
         total: questions.length,
         topicId: topicId,
         subjectId: subjectId

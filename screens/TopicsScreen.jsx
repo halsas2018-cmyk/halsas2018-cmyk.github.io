@@ -22,8 +22,21 @@ export default function TopicsScreen({ route, navigation }) {
   const [bookingTopic, setBookingTopic] = useState("");
   const [studentName, setStudentName] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
+  // Per-topic quiz length chosen on the segmented control. Defaults to Quick (5)
+  // for every topic; persisted in local component state for the session.
+  const [quizLengths, setQuizLengths] = useState({});
   const { unlockWithRewarded } = useAds();
   const theme = useTheme();
+
+  const LENGTHS = [
+    { k: 5, label: "Quick" },
+    { k: 10, label: "Standard" },
+    { k: 20, label: "Marathon" },
+  ];
+
+  function lengthFor(topicId) {
+    return quizLengths[topicId] || 5;
+  }
 
   const subjectData = SUBJECTS.find(
     (sub) => sub.id.toLowerCase() === subjectId.toLowerCase()
@@ -151,22 +164,52 @@ export default function TopicsScreen({ route, navigation }) {
                 </View>
               </View>
 
+              {/* Quiz length chooser — Quick / Standard / Marathon */}
+              <View style={{ flexDirection: "row", gap: 6, marginBottom: 12 }}>
+                {LENGTHS.map((opt) => {
+                  const active = lengthFor(item.id) === opt.k;
+                  return (
+                    <TouchableOpacity
+                      key={opt.k}
+                      activeOpacity={0.8}
+                      onPress={() => setQuizLengths((m) => ({ ...m, [item.id]: opt.k }))}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 7,
+                        borderRadius: 10,
+                        alignItems: "center",
+                        borderWidth: 1,
+                        backgroundColor: active ? hexToRgba(theme.colors.primary, 0.10) : theme.colors.surfaceAlt,
+                        borderColor: active ? hexToRgba(theme.colors.primary, 0.4) : theme.colors.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 11.5, fontWeight: "700", color: active ? theme.colors.primary : theme.colors.textMuted }}>
+                        {opt.label} · {opt.k}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
               {/* Explicit Translucent Buttons Row */}
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => {
+                    const ql = lengthFor(item.id);
                     if (LOCKED_TOPICS.includes(item.id)) {
                       unlockWithRewarded(() => navigation.navigate("QuizScreen", {
                         subjectId: subjectData.id,
                         topicId: item.id,
-                        topicTitle: item.name
+                        topicTitle: item.name,
+                        quizLength: ql
                       }));
                     } else {
                       navigation.navigate("QuizScreen", {
                         subjectId: subjectData.id,
                         topicId: item.id,
-                        topicTitle: item.name
+                        topicTitle: item.name,
+                        quizLength: ql
                       });
                     }
                   }}

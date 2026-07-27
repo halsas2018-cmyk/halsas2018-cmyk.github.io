@@ -49,6 +49,9 @@ export const streakStorage = {
       s.count = s.lastDate === key(y) ? (s.count || 0) + 1 : 1;
       s.lastDate = t;
     }
+    // Track the best-ever streak so getBest() returns a real value (it was
+    // defined but never populated before — best stayed 0 forever).
+    if ((s.count || 0) > (s.best || 0)) s.best = s.count || 0;
     await write(s);
     return s;
   },
