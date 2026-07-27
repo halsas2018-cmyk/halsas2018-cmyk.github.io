@@ -45,7 +45,7 @@ export default function RatePrep() {
       target: predicted,
       apparatus: app,
     };
-    navigation.navigate("RateExperiment", { experiment, topicId, config });
+    navigation.navigate("RateLab", { experiment, topicId, config });
   }
 
   const Chip = ({ item, selected, onPick, right }) => (

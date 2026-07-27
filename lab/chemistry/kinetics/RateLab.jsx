@@ -21,7 +21,7 @@ const TOL = 1.5; // success window (s) around the true disappearance time
 
 const STEP_LABELS = ["Thiosulphate", "Acid", "Timer", "Stop"];
 
-export default function RateExperiment() {
+export default function RateLab() {
   const navigation = useNavigation();
   const route = useRoute();
   const experiment = route.params?.experiment || {};

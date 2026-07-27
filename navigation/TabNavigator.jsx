@@ -12,9 +12,9 @@ import ChemistryExperimentsScreen from "../lab/ChemistryExperimentsScreen";
 import BiologyExperimentsScreen from "../lab/BiologyExperimentsScreen";
 import PhysicsExperimentsScreen from "../lab/PhysicsExperimentsScreen";
 import ExperimentsScreen from "../lab/ExperimentsScreen";
-import TitrationExperiment from "../lab/chemistry/acids/TitrationExperiment";
+import TitrationLab from "../lab/chemistry/acids/TitrationLab";
 import TitrationPrep from "../lab/titration/TitrationPrep";
-import RateExperiment from "../lab/chemistry/kinetics/RateExperiment";
+import RateLab from "../lab/chemistry/kinetics/RateLab";
 import RatePrep from "../lab/chemistry/kinetics/RatePrep";
 // Chemistry interactive labs
 import MetalsExtractionPrep from "../lab/chemistry/metals/MetalsExtractionPrep";
@@ -185,8 +185,8 @@ function LabStackNavigator() {
         options={{ tabBarStyle: { display: "none" } }}
       />
       <LabStack.Screen
-        name="TitrationExperiment"
-        component={TitrationExperiment}
+        name="TitrationLab"
+        component={TitrationLab}
         options={{ tabBarStyle: { display: "none" } }}
       />
       <LabStack.Screen
@@ -195,8 +195,8 @@ function LabStackNavigator() {
         options={{ tabBarStyle: { display: "none" } }}
       />
       <LabStack.Screen
-        name="RateExperiment"
-        component={RateExperiment}
+        name="RateLab"
+        component={RateLab}
         options={{ tabBarStyle: { display: "none" } }}
       />
       <LabStack.Screen

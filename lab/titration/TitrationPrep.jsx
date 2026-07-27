@@ -47,7 +47,7 @@ export default function TitrationPrep() {
       endpoint,
       apparatus: app,
     };
-    navigation.navigate("TitrationExperiment", { experiment, topicId, config });
+    navigation.navigate("TitrationLab", { experiment, topicId, config });
   }
 
   const Chip = ({ item, selected, onPick, right }) => (

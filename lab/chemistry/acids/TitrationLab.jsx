@@ -31,7 +31,7 @@ function hexToRgba(h, a) {
   return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 }
 
-export default function TitrationExperiment() {
+export default function TitrationLab() {
   const navigation = useNavigation();
   const route = useRoute();
   const experiment = route.params?.experiment || {};
@@ -169,7 +169,7 @@ export default function TitrationExperiment() {
     if (!buretteFilled) return say("Fill the burette with acid first! 🧪");
     if (used < TARGET - TOL_LOW) return say("Not yet — the solution still shows the alkali colour. Add more acid. 🌸");
     if (used > TARGET + TOL_HIGH) { setStatus("failed"); return say("Too late — you overshot the endpoint. Tap Reset to retry. 💥"); }
-    setStatus("success"); setSaved(false); setNotes(""); setReportOpen(true);
+    setStatus("success"); setSaved(false); setNotes("");
     say("✅ Endpoint! The colour just changed — perfect. Write up your report.");
   }
 
