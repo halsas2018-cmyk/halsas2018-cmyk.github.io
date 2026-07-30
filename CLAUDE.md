@@ -27,6 +27,21 @@ Practice (quiz), Virtual Lab, Study Cards, Final Exams.
 > Only app source was copied — `package.json`/`app.json` stay pinned to SDK 56, and
 > the missing nav/file-system/icon packages were added at SDK-56-compatible versions.
 
+> **v2 package fork (intentional — do NOT revert):** `app.json` ships as
+> `com.sas26steam.scipractice2` / version `2.0.0` / `versionCode 200`, with the
+> user-visible `name` `SciPractice 2`. This is deliberate: the prior
+> `com.sas26steam.scipractice` was listed on Palmstore under a different signing
+> key (Key A) — Palmstore enforces key continuity and refused a re-listing under
+> the same package name — so the app was re-packaged as v2 to start fresh listings
+> on every store. The signing key (Key B, the committed `.gpg` keystore + the
+> `ANDROID_*` CI secrets) is UNCHANGED — v2 is still signed with Key B. In-app
+> brand strings still say `SciPractice` (only the icon/store label is `SciPractice 2`).
+> Old v1 listings are FROZEN (left up, no further updates), not deleted. Do not
+> change the package name back to `…scipractice` — it would re-trigger the
+> Palmstore conflict. CI needs no edit for this: `expo prebuild --clean`
+> regenerates `android/` from `app.json` each build, and the only gradle patch
+> (`ci/patch-android-signing.js`) never hardcodes `applicationId`/`versionCode`.
+
 ## File structure (only what matters)
 - `navigation/RootNavigator.jsx` — root stack: `MainTabs`, `TopicsScreen`, `QuizScreen`,
   `ResultScreen`, `HistoryScreen`, `ExamScreen`, `AboutScreen`.
