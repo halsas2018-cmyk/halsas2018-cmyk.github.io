@@ -452,6 +452,11 @@ default-exports `{ id, topicId, title, status, screen? }`:
   `lab/chemistry/nonmetals/`), soap (`ChemSoapPrep`/`ChemSoapLab`,
   `lab/chemistry/industry/`), electrolysis (`ChemElectrolysisPrep`/`ChemElectrolysisLab`,
   `lab/chemistry/bonding/`)**.
+
+**Recent fixes applied (2025):**
+- **Crash fixes**: `AcidsSaltPrepLab.jsx` (ChoiceRow theme prop), `SolubilityCrystalLab.jsx` (Bubble component), `BiochemEnzymeLab.jsx` (Bubble useRef), `EnergyCalorimetryLab.jsx` (Bubble component), `StoichMassMoleLab.jsx` (Particle component)
+- **Animations added**: `ChemElectrolysisLab.jsx` (ion movement, bubbles, copper deposit, anode dissolve, color fade), `ChemOxygenLab.jsx` (gas bubbles, glowing splint test, 4-step endpoint), `ChemBromineWaterLab.jsx` (droplet fall, color transition, reaction bubbles), `ChemGasTestsLab.jsx` (gas-specific test animations: limewater, glowing splint, pop test, damp litmus), `ChemSoapLab.jsx` (saponification bubbles, stirring rod, soap curd precipitation), `StatesGasLawsLab.jsx` (endpoint checkmark, result card slide-up)
+- **Report button fixes**: `AcidsSaltPrepLab.jsx` - report button now appears on success state
 - Physics (18): projectile (`PhysicsProjectilePrep`/`PhysicsProjectileLab`,
   `lab/physics/all-projectile/`), pendulum/SHM (`PhysicsPendulumPrep`/`PhysicsPendulumLab`,
   `lab/physics/p1-shm/`), refraction (`PhysicsRefractionPrep`/`PhysicsRefractionLab`,
