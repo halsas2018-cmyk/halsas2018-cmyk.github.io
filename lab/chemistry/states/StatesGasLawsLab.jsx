@@ -81,6 +81,8 @@ export default function StatesGasLawsLab() {
 
   const say = (m) => setMessage(m);
   const glow = useRef(new Animated.Value(0)).current;
+  const endpointScale = useRef(new Animated.Value(0)).current;
+  const resultCardY = useRef(new Animated.Value(50)).current;
   const glowLoop = useRef(null);
   const pulseGlow = () => {
     if (glowLoop.current) glowLoop.current.stop();
@@ -99,8 +101,20 @@ export default function StatesGasLawsLab() {
     glow.setValue(0);
   };
   useEffect(() => {
-    if (status === "success") pulseGlow();
-    else stopGlow();
+    if (status === "success") {
+      pulseGlow();
+      // Animate endpoint checkmark
+      Animated.sequence([
+        Animated.timing(endpointScale, { toValue: 1.2, duration: 300, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
+        Animated.timing(endpointScale, { toValue: 1, duration: 200, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start();
+      // Animate result card slide up
+      Animated.timing(resultCardY, { toValue: 0, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    } else {
+      stopGlow();
+      endpointScale.setValue(0);
+      resultCardY.setValue(50);
+    }
     return () => stopGlow();
   }, [status]);
 
@@ -264,8 +278,24 @@ export default function StatesGasLawsLab() {
               <View key={g} style={{ position: "absolute", left: 6, right: 6, bottom: 6 + 210 * g, height: 1.5, backgroundColor: GLASS }} />
             ))}
             {/* piston resting on top of the gas column */}
-            <View style={{ position: "absolute", bottom: 6 + colHeight, width: 104, height: 12, backgroundColor: "#475569", borderRadius: 3, left: -6 }} />
+            <Animated.View style={{ position: "absolute", bottom: 6 + colHeight, width: 104, height: 12, backgroundColor: "#475569", borderRadius: 3, left: -6 }} />
             <View style={{ position: "absolute", bottom: 6 + colHeight + 12, width: 8, height: 210 - colHeight - 12, backgroundColor: "#64748b" }} />
+            {/* Endpoint indicator for Boyle */}
+            {showSuccess && (
+              <View style={{ position: "absolute", top: -40, left: 0, right: 0, alignItems: "center" }}>
+                <Animated.View style={{ 
+                  width: 60, height: 60, borderRadius: 30, 
+                  backgroundColor: GREEN, 
+                  alignItems: "center", justifyContent: "center",
+                  transform: [{ scale: endpointScale }]
+                }}>
+                  <Text style={{ fontSize: 28, color: "#fff" }}>✓</Text>
+                </Animated.View>
+                <Text style={{ marginTop: 6, fontSize: 12, fontWeight: "800", color: GREEN }}>
+                  {scenario.label.includes("pressure") ? "Pressure doubled → Volume halved" : "Volume doubled → Pressure halved"}
+                </Text>
+              </View>
+            )}
             <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 10 }}>
               {scenario.label.includes("pressure") ? "Pressure ↑ → volume ↓" : "Volume ↑ → pressure ↓"}
             </Text>
@@ -280,6 +310,22 @@ export default function StatesGasLawsLab() {
               </Svg>
             </Animated.View>
             <View style={{ position: "absolute", bottom: -6, width: 30, height: 16, backgroundColor: "transparent", borderLeftWidth: 2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: BLUE, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }} />
+            {/* Endpoint indicator for Charles */}
+            {showSuccess && (
+              <View style={{ position: "absolute", top: -40, left: 0, right: 0, alignItems: "center" }}>
+                <Animated.View style={{ 
+                  width: 60, height: 60, borderRadius: 30, 
+                  backgroundColor: GREEN, 
+                  alignItems: "center", justifyContent: "center",
+                  transform: [{ scale: endpointScale }]
+                }}>
+                  <Text style={{ fontSize: 28, color: "#fff" }}>✓</Text>
+                </Animated.View>
+                <Text style={{ marginTop: 6, fontSize: 12, fontWeight: "800", color: GREEN }}>
+                  Temperature changed → Volume changed proportionally (V ∝ T)
+                </Text>
+              </View>
+            )}
             <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 12 }}>
               V ∝ T (Kelvin): {heated ? "warmer → bigger" : cooled ? "cooler → smaller" : "constant"}
             </Text>
@@ -294,6 +340,48 @@ export default function StatesGasLawsLab() {
           <View style={{ width: 1, backgroundColor: "#e5e7eb", marginHorizontal: 12 }} />
           <Readout label="T" value={`${live.Tc} °C`} />
         </View>
+        
+        {/* Final Result Card - appears on success */}
+        {showSuccess && (
+          <View style={{ 
+            position: "absolute", 
+            bottom: -120, 
+            left: 20, 
+            right: 20,
+            backgroundColor: "#f0fdf4",
+            borderWidth: 2,
+            borderColor: GREEN,
+            borderRadius: 16,
+            padding: 16,
+            transform: [{ translateY: resultCardY }]
+          }}>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: GREEN, textAlign: "center", marginBottom: 8 }}>
+              🎉 Experiment Complete!
+            </Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 8 }}>
+              <View style={{ alignItems: "center" }}>
+                <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700" }}>Final P</Text>
+                <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a" }}>{final.P} atm</Text>
+              </View>
+              <View style={{ alignItems: "center" }}>
+                <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700" }}>Final V</Text>
+                <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a" }}>{final.V} L</Text>
+              </View>
+              <View style={{ alignItems: "center" }}>
+                <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700" }}>Final T</Text>
+                <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a" }}>{final.Tc} °C</Text>
+              </View>
+            </View>
+            <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, padding: 10 }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center" }}>
+                {scenario.findVar} = {answer.value} {answer.unit} ✓
+              </Text>
+              <Text style={{ fontSize: 11, color: "#166534", textAlign: "center", marginTop: 2 }}>
+                Your prediction: {guess} {answer.unit} — {Math.abs(guess - answer.value) <= tol ? "Within tolerance!" : "Outside tolerance"}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* ===== CONTROL PANEL ===== */}
@@ -317,7 +405,12 @@ export default function StatesGasLawsLab() {
             </TouchableOpacity>
           </View>
         ) : showSuccess ? (
-          <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent={GREEN} full />
+          <View>
+            <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent={GREEN} full />
+            <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset Experiment</Text>
+            </TouchableOpacity>
+          </View>
         ) : showFail ? (
           <TouchableOpacity onPress={reset} style={{ alignItems: "center", paddingVertical: 12 }}>
             <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 14 }}>↺ Reset Experiment</Text>
