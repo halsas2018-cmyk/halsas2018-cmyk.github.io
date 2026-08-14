@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StatusBar, Modal, ScrollView, Animated, Easing, KeyboardAvoidingView, Platform, TextInput } from "react-native";
-import { Svg, Path, Circle } from "react-native-svg";
+import { Svg, Path, Circle, Rect } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -10,7 +10,68 @@ import { haptic } from "../../../haptic";
 import { BROMINE, CLEAR, SAMPLES } from "./bromine-water-data";
 
 const ACCENT = "#16a34a";
-const STEP_LABELS = ["Add sample", "Observe", "Result"];
+const STEP_LABELS = ["Add sample", "Mix", "Observe", "Result"];
+
+// Droplet falling into test tube
+function Droplet({ delay, color, onComplete }) {
+  const y = useRef(new Animated.Value(-50)).current;
+  const o = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const run = () => {
+      y.setValue(-50); o.setValue(1); scale.setValue(1);
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(y, { toValue: 80, duration: 600, delay, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(o, { toValue: 1, duration: 200, delay, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(scale, { toValue: 0.3, duration: 200, useNativeDriver: true }),
+          Animated.timing(o, { toValue: 0, duration: 200, useNativeDriver: true }),
+        ]),
+      ]).start(() => {
+        onComplete && onComplete();
+      });
+    };
+    run();
+    return () => { y.stopAnimation(); o.stopAnimation(); scale.stopAnimation(); };
+  }, [delay, y, o, scale, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", top: 0, left: "50%", marginLeft: -6, width: 12, height: 16, borderRadius: 6, backgroundColor: color, opacity: o, transform: [{ translateY: y }, { scale }] }} />
+  );
+}
+
+// Color transition animation
+function ColorTransition({ color, duration = 1000 }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    anim.setValue(0);
+    Animated.timing(anim, { toValue: 1, duration, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+  }, [color, duration, anim]);
+  return anim;
+}
+
+// Bubble animation for reaction
+function ReactionBubble({ delay, color }) {
+  const y = useRef(new Animated.Value(0)).current;
+  const o = useRef(new Animated.Value(0)).current;
+  const x = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const run = () => {
+      y.setValue(0); o.setValue(0.7); x.setValue((Math.random() - 0.5) * 20);
+      Animated.parallel([
+        Animated.timing(y, { toValue: -100, duration: 1200, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(o, { toValue: 0, duration: 1200, delay, useNativeDriver: true }),
+        Animated.timing(x, { toValue: (Math.random() - 0.5) * 30, duration: 1200, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(() => run());
+    };
+    run();
+    return () => { y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
+  }, [delay, y, o, x]);
+  return (
+    <Animated.View style={{ position: "absolute", bottom: 20, left: "50%", marginLeft: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: o, transform: [{ translateY: y }, { translateX: x }] }} />
+  );
+}
 
 export default function ChemBromineWaterLab() {
   const theme = useTheme();
@@ -22,6 +83,7 @@ export default function ChemBromineWaterLab() {
 
   const sample = cfg?.sample || SAMPLES[0];
   const [added, setAdded] = useState(false);
+  const [mixing, setMixing] = useState(false);
   const [status, setStatus] = useState("idle");
   const [liquidColor, setLiquidColor] = useState(BROMINE);
   const [message, setMessage] = useState("Add the sample to the bromine water.");
@@ -30,29 +92,52 @@ export default function ChemBromineWaterLab() {
   const [saved, setSaved] = useState(false);
 
   const glow = useRef(new Animated.Value(0)).current;
-  const animTo = (a, v, d = 700) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+  const colorAnim = useRef(new Animated.Value(0)).current;
+  const [showDroplet, setShowDroplet] = useState(false);
+  const [showBubbles, setShowBubbles] = useState(false);
+
+  const animTo = (a, v, d = 700, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 14 };
 
   function addSample() {
     if (added) return;
     haptic.light();
     setAdded(true);
-    animTo(glow, 1, 500);
-    Animated.delay(700).start(() => {
+    setShowDroplet(true);
+    setMessage("Adding sample…");
+    
+    // Animate droplet falling
+    setTimeout(() => {
+      setShowDroplet(false);
+      setMixing(true);
+      setShowBubbles(true);
+      animTo(glow, 1, 500);
+      setMessage("Mixing… watch for colour change.");
+      
+      // Animate color transition
       if (sample.decolorizes) {
-        setLiquidColor(CLEAR);
-        setStatus("success");
-        setMessage("✅ The orange colour disappeared — the sample is UNSATURATED (an alkene).");
+        Animated.timing(colorAnim, { toValue: 1, duration: 2000, easing: Easing.out(Easing.quad), useNativeDriver: false }).start(() => {
+          setLiquidColor(CLEAR);
+          setMixing(false);
+          setShowBubbles(false);
+          setStatus("success");
+          setMessage("✅ The orange colour disappeared — the sample is UNSATURATED (an alkene).");
+        });
       } else {
-        setStatus("success");
-        setMessage("✅ The orange colour remained — the sample is SATURATED (an alkane, no double bond).");
+        Animated.delay(2000).start(() => {
+          setMixing(false);
+          setShowBubbles(false);
+          setStatus("success");
+          setMessage("✅ The orange colour remained — the sample is SATURATED (an alkane, no double bond).");
+        });
       }
-    });
+    }, 800);
   }
 
   function reset() {
-    setAdded(false); setStatus("idle"); setSaved(false); setNotes("");
-    setLiquidColor(BROMINE); glow.setValue(0);
+    setAdded(false); setMixing(false); setStatus("idle"); setSaved(false); setNotes("");
+    setLiquidColor(BROMINE); glow.setValue(0); colorAnim.setValue(0);
+    setShowDroplet(false); setShowBubbles(false);
     setMessage("Add the sample to the bromine water.");
   }
 
@@ -73,7 +158,13 @@ export default function ChemBromineWaterLab() {
     if (ok) { setSaved(true); setMessage("📝 Report saved."); } else setMessage("Could not save the report.");
   }
 
-  const step = added ? (status === "success" ? 3 : 1) : 0;
+  const step = status === "success" ? 4 : mixing ? 3 : added ? 2 : 0;
+
+  // Interpolate color for smooth transition
+  const displayColor = colorAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [BROMINE, CLEAR],
+  });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={["top", "left", "right"]}>
@@ -98,8 +189,26 @@ export default function ChemBromineWaterLab() {
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <Animated.View pointerEvents="none" style={{ position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: ACCENT, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.12] }), transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.1] }) }] }} />
-        <TestTube fill={0.6} color={liquidColor} />
-        <Text style={labelStyle}>{added ? (sample.decolorizes ? "Colourless" : "Still orange") : "Orange bromine water"}</Text>
+        <View style={{ position: "relative", width: 60, height: 180 }}>
+          <TestTube fill={0.6} color={displayColor} />
+          {/* Droplet falling */}
+          {showDroplet && <Droplet delay={0} color={sample.color || "#64748b"} onComplete={() => {}} />}
+          {/* Reaction bubbles */}
+          {showBubbles && (
+            <View style={{ position: "absolute", bottom: 30, left: 0, right: 0, height: 100, alignItems: "center" }}>
+              {[0, 1, 2, 3].map((i) => <ReactionBubble key={i} delay={i * 200} color={sample.decolorizes ? "#fff" : BROMINE} />)}
+            </View>
+          )}
+        </View>
+        <Text style={labelStyle}>
+          {status === "success" 
+            ? (sample.decolorizes ? "Colourless — unsaturated! ✅" : "Still orange — saturated ✅") 
+            : mixing 
+            ? "Reacting… 🫧" 
+            : added 
+            ? "Sample added, mixing…" 
+            : "Orange bromine water"}
+        </Text>
       </View>
 
       <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 18, shadowColor: "#000", shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 10 }}>
@@ -115,7 +224,7 @@ export default function ChemBromineWaterLab() {
             </TouchableOpacity>
           </>
         ) : (
-          <Btn label="① Add sample" onPress={addSample} accent={ACCENT} full />
+          <Btn label={added ? (mixing ? "② Mixing…" : "② Observe") : "① Add sample"} onPress={addSample} disabled={added} accent={ACCENT} full />
         )}
       </View>
 

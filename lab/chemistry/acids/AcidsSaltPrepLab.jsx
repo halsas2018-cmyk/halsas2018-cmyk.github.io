@@ -276,9 +276,9 @@ export default function AcidsSaltPrepLab() {
           </>
         ) : !acidPoured ? (
           <View>
-            <ChoiceRow label="Acid" options={ACIDS} selected={acid} onSelect={setAcid} />
-            <ChoiceRow label="Base" options={BASES} selected={base} onSelect={setBase} />
-            <ChoiceRow label="Indicator" options={INDICATORS} selected={indicator} onSelect={setIndicator} />
+            <ChoiceRow label="Acid" options={ACIDS} selected={acid} onSelect={setAcid} theme={theme} />
+            <ChoiceRow label="Base" options={BASES} selected={base} onSelect={setBase} theme={theme} />
+            <ChoiceRow label="Indicator" options={INDICATORS} selected={indicator} onSelect={setIndicator} theme={theme} />
             <Btn
               label={acid ? `① Add ${acid.formula}` : "① Choose reagents first"}
               onPress={addAcid}
@@ -407,7 +407,7 @@ function Drop({ color, onDone }) {
 }
 
 // Student choice row: tap a chip to select (no pre-selection).
-function ChoiceRow({ label, options, selected, onSelect }) {
+function ChoiceRow({ label, options, selected, onSelect, theme }) {
   return (
     <View style={{ marginBottom: 8 }}>
       <Text style={{ fontSize: 11, fontWeight: "800", color: "#475569", marginBottom: 4 }}>{label}</Text>

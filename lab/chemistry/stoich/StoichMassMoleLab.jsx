@@ -319,6 +319,13 @@ export default function StoichMassMoleLab() {
   );
 }
 
+// Animated particle component for reactants/products
+function Particle({ x, y, r, color, o }) {
+  return (
+    <Circle cx={x} cy={y} r={r} fill={color} opacity={o} />
+  );
+}
+
 function Btn({ label, onPress, disabled, accent = GREEN, full }) {
   return (
     <TouchableOpacity

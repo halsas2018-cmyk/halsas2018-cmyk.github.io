@@ -323,7 +323,7 @@ function Bubble({ delay, color }) {
     return () => { y.stopAnimation(); o.stopAnimation(); };
   }, [delay, y, o]);
   return (
-    <Animated.View style={{ position: "absolute", bottom: 6, left: 6 + (delay % 3) * 10, width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#ffffff", opacity: o, transform: [{ translateY: y }] }} />
+    <Animated.View style={{ position: "absolute", bottom: 6, left: 6 + (delay % 3) * 10, width: 7, height: 7, borderRadius: 3.5, backgroundColor: color || "#ffffff", opacity: o, transform: [{ translateY: y }] }} />
   );
 }
 

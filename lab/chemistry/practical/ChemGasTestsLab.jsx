@@ -1,16 +1,135 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StatusBar, Modal, ScrollView, Animated, Easing, KeyboardAvoidingView, Platform, TextInput } from "react-native";
-import { Svg, Path } from "react-native-svg";
+import { Svg, Path, Circle, Rect } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
-import { GasJar } from "../../components/svgKit";
+import { GasJar, TestTube } from "../../components/svgKit";
 import { useTheme } from "../../../theme";
 import { haptic } from "../../../haptic";
 import { GASES } from "./gas-tests-data";
 
 const ACCENT = "#0ea5e9";
-const STEP_LABELS = ["Collect", "Run test", "Result"];
+const STEP_LABELS = ["Collect", "Run test", "Observe", "Result"];
+
+// Gas bubble rising in jar
+function GasBubble({ delay, color }) {
+  const y = useRef(new Animated.Value(0)).current;
+  const o = useRef(new Animated.Value(0)).current;
+  const x = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const run = () => {
+      y.setValue(0); o.setValue(0.7); x.setValue((Math.random() - 0.5) * 15);
+      Animated.parallel([
+        Animated.timing(y, { toValue: -120, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(o, { toValue: 0, duration: 1500, delay, useNativeDriver: true }),
+        Animated.timing(x, { toValue: (Math.random() - 0.5) * 25, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(() => run());
+    };
+    run();
+    return () => { y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
+  }, [delay, y, o, x]);
+  return (
+    <Animated.View style={{ position: "absolute", bottom: 15, left: "50%", marginLeft: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: o, transform: [{ translateY: y }, { translateX: x }] }} />
+  );
+}
+
+// Test-specific animation components
+function LimewaterTest({ active, onComplete }) {
+  const cloudy = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (active) {
+      cloudy.setValue(0);
+      Animated.timing(cloudy, { toValue: 1, duration: 2000, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => {
+        Animated.delay(1000).start(() => onComplete && onComplete());
+      });
+    }
+  }, [active, cloudy, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", top: 20, left: 0, right: 0, height: 80, alignItems: "center" }}>
+      <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: cloudy.interpolate({ inputRange: [0, 1], outputRange: ["#e0f2fe", "#fef3c7"] }), borderWidth: 2, borderColor: "#94a3b8" }} />
+      <Text style={{ position: "absolute", bottom: -20, fontSize: 10, color: "#64748b", fontWeight: "700" }}>Limewater</Text>
+    </Animated.View>
+  );
+}
+
+function GlowingSplintTest({ active, onComplete }) {
+  const glow = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (active) {
+      y.setValue(0); glow.setValue(0);
+      Animated.parallel([
+        Animated.timing(y, { toValue: -50, duration: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.delay(1000).start(() => {
+          Animated.parallel([
+            Animated.timing(y, { toValue: 0, duration: 500, useNativeDriver: true }),
+            Animated.timing(glow, { toValue: 0, duration: 500, useNativeDriver: true }),
+          ]).start(() => onComplete && onComplete());
+        });
+      });
+    }
+  }, [active, y, glow, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", top: 30, right: -20, transform: [{ translateY: y }] }}>
+      <Svg width={40} height={70} viewBox="0 0 40 70">
+        <Path d="M20 0 L20 60" stroke="#92400e" strokeWidth="4" />
+        <Path d="M20 0 L14 10 L26 10 Z" fill={glow.interpolate({ inputRange: [0, 1], outputRange: ["#f59e0b", "#fbbf24"] })} />
+        <Animated.View style={{ position: "absolute", top: -10, left: 5, right: 5, height: 20, borderRadius: 10, backgroundColor: "#fbbf24", opacity: glow }} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+function PopTest({ active, onComplete }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  const flash = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (active) {
+      pop.setValue(0); flash.setValue(0);
+      Animated.sequence([
+        Animated.timing(pop, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(flash, { toValue: 1, duration: 100, useNativeDriver: true }),
+        Animated.timing(flash, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(pop, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.delay(500).start(() => onComplete && onComplete());
+      });
+    }
+  }, [active, pop, flash, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", top: 20, left: 0, right: 0, height: 80, alignItems: "center" }}>
+      <Animated.View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: flash.interpolate({ inputRange: [0, 1], outputRange: ["transparent", "#fff"] }), borderWidth: 2, borderColor: "#94a3b8" }}>
+        <Animated.View style={{ flex: 1, justifyContent: "center", alignItems: "center", transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }}>
+          <Text style={{ fontSize: 24, fontWeight: "900", color: "#dc2626" }}>💥</Text>
+        </Animated.View>
+      </Animated.View>
+      <Text style={{ position: "absolute", bottom: -20, fontSize: 10, color: "#64748b", fontWeight: "700" }}>H₂ pop test</Text>
+    </Animated.View>
+  );
+}
+
+function DampLitmusTest({ active, onComplete, color }) {
+  const change = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (active) {
+      change.setValue(0);
+      Animated.timing(change, { toValue: 1, duration: 1500, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => {
+        Animated.delay(1000).start(() => onComplete && onComplete());
+      });
+    }
+  }, [active, change, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", top: 30, left: -20 }}>
+      <Svg width={30} height={60} viewBox="0 0 30 60">
+        <Rect x={5} y={10} width={20} height={40} fill={change.interpolate({ inputRange: [0, 1], outputRange: ["#e0f2fe", color] })} stroke="#94a3b8" strokeWidth="1" rx={3} />
+      </Svg>
+      <Text style={{ position: "absolute", top: 55, left: -5, fontSize: 10, color: "#64748b", fontWeight: "700" }}>Damp litmus</Text>
+    </Animated.View>
+  );
+}
 
 export default function ChemGasTestsLab() {
   const theme = useTheme();
@@ -23,7 +142,8 @@ export default function ChemGasTestsLab() {
   const gas = cfg?.gas || GASES[0];
 
   const [collected, setCollected] = useState(false);
-  const [ran, setRan] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testDone, setTestDone] = useState(false);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("Collect the gas in the gas jar first.");
   const [reportOpen, setReportOpen] = useState(false);
@@ -31,8 +151,7 @@ export default function ChemGasTestsLab() {
   const [saved, setSaved] = useState(false);
 
   const fill = useRef(new Animated.Value(0)).current;
-  const splint = useRef(new Animated.Value(0)).current;
-  const animTo = (a, v, d = 700) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+  const animTo = (a, v, d = 700, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
 
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 14 };
 
@@ -40,23 +159,27 @@ export default function ChemGasTestsLab() {
     if (collected) return;
     haptic.light();
     setCollected(true);
-    animTo(fill, 1, 900);
+    animTo(fill, 1, 1500);
     setMessage(`Gas collected. Now run the ${gas.test} test.`);
   }
 
   function runTest() {
-    if (!collected) return;
-    if (ran) return;
+    if (!collected || testing) return;
     haptic.light();
-    setRan(true);
-    animTo(splint, 1, 500);
+    setTesting(true);
+    setMessage(`Running ${gas.test} test…`);
+  }
+
+  function onTestComplete() {
+    setTesting(false);
+    setTestDone(true);
     setStatus("success");
     setMessage(`✅ ${gas.name}: ${gas.result}.`);
   }
 
   function reset() {
-    setCollected(false); setRan(false); setStatus("idle"); setSaved(false); setNotes("");
-    fill.setValue(0); splint.setValue(0);
+    setCollected(false); setTesting(false); setTestDone(false); setStatus("idle"); setSaved(false); setNotes("");
+    fill.setValue(0);
     setMessage("Collect the gas in the gas jar first.");
   }
 
@@ -78,7 +201,24 @@ export default function ChemGasTestsLab() {
     if (ok) { setSaved(true); setMessage("📝 Report saved."); } else setMessage("Could not save the report.");
   }
 
-  const step = collected ? (ran ? 3 : 1) : 0;
+  const step = status === "success" ? 4 : testing ? 3 : collected ? 2 : 0;
+
+  // Determine test component based on gas
+  const renderTest = () => {
+    if (!testing && !testDone) return null;
+    switch (gas.id) {
+      case "co2":
+        return <LimewaterTest active={testing || testDone} onComplete={onTestComplete} />;
+      case "o2":
+        return <GlowingSplintTest active={testing} onComplete={onTestComplete} />;
+      case "h2":
+        return <PopTest active={testing} onComplete={onTestComplete} />;
+      case "nh3":
+        return <DampLitmusTest active={testing || testDone} onComplete={onTestComplete} color="#fef08a" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={["top", "left", "right"]}>
@@ -102,16 +242,22 @@ export default function ChemGasTestsLab() {
       </View>
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Animated.View style={{ opacity: fill }}>
-          <GasJar fill={1} color={gas.color} />
-        </Animated.View>
-        <Animated.View style={{ position: "absolute", top: 40, opacity: splint, transform: [{ translateX: splint.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }] }}>
-          <Svg width={40} height={60} viewBox="0 0 40 60">
-            <Path d="M20 0 L20 60" stroke="#92400e" strokeWidth="4" />
-            <Path d="M20 0 L14 10 L26 10 Z" fill="#f59e0b" />
-          </Svg>
-        </Animated.View>
-        <Text style={labelStyle}>{collected ? gas.name + " collected" : "Empty gas jar"}</Text>
+        <View style={{ position: "relative", width: 100, height: 200 }}>
+          <Animated.View style={{ opacity: fill }}>
+            <GasJar fill={1} color={gas.color} />
+            {/* Bubbles rising in gas jar during collection */}
+            {(collected && !testDone) && (
+              <View style={{ position: "absolute", bottom: 20, left: 0, right: 0, height: 120, alignItems: "center" }}>
+                {[0, 1, 2, 3, 4].map((i) => <GasBubble key={i} delay={i * 200} color={gas.color} />)}
+              </View>
+            )}
+          </Animated.View>
+          {/* Test animation overlay */}
+          {renderTest()}
+        </View>
+        <Text style={labelStyle}>
+          {testDone ? `${gas.name} identified! ✅` : testing ? `Testing: ${gas.test}…` : collected ? `${gas.name} collected — run test` : "Empty gas jar"}
+        </Text>
       </View>
 
       <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 18, shadowColor: "#000", shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 10 }}>
@@ -127,9 +273,9 @@ export default function ChemGasTestsLab() {
             </TouchableOpacity>
           </>
         ) : (
-          <View style={{ flexDirection: "row" }}>
-            <Btn label="① Collect" onPress={collect} disabled={collected} />
-            <Btn label="② Run test" onPress={runTest} disabled={!collected || ran} accent={ACCENT} />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+            <Btn label="① Collect" onPress={collect} disabled={collected} style={{ margin: 3 }} />
+            <Btn label="② Run test" onPress={runTest} disabled={!collected || testing} accent={ACCENT} style={{ margin: 3 }} />
           </View>
         )}
       </View>
@@ -174,13 +320,13 @@ export default function ChemGasTestsLab() {
   );
 }
 
-function Btn({ label, onPress, disabled, accent = ACCENT, full }) {
+function Btn({ label, onPress, disabled, accent = ACCENT, full, style }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.85}
-      style={{ flex: full ? undefined : 1, width: full ? "100%" : undefined, backgroundColor: disabled ? "#e5e7eb" : accent, borderRadius: 11, paddingVertical: 12, alignItems: "center", justifyContent: "center", marginHorizontal: full ? 0 : 3, opacity: disabled ? 0.55 : 1 }}
+      style={{ flex: full ? undefined : 1, width: full ? "100%" : undefined, backgroundColor: disabled ? "#e5e7eb" : accent, borderRadius: 11, paddingVertical: 12, alignItems: "center", justifyContent: "center", marginHorizontal: full ? 0 : 3, opacity: disabled ? 0.55 : 1, ...style }}
     >
       <Text style={{ color: disabled ? "#94a3b8" : "#fff", fontWeight: "800", fontSize: full ? 14 : 11.5 }} numberOfLines={1}>{label}</Text>
     </TouchableOpacity>

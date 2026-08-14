@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StatusBar, Modal, ScrollView, Animated, Easing, KeyboardAvoidingView, Platform, TextInput } from "react-native";
-import { Svg, Path } from "react-native-svg";
+import { Svg, Path, Circle } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -10,7 +10,61 @@ import { haptic } from "../../../haptic";
 import { METHODS } from "./oxygen-data";
 
 const ACCENT = "#16a34a";
-const STEP_LABELS = ["React", "Collect", "Result"];
+const STEP_LABELS = ["React", "Collect", "Test", "Result"];
+
+// Gas bubble particle
+function GasBubble({ delay, color = "#93c5fd" }) {
+  const y = useRef(new Animated.Value(0)).current;
+  const o = useRef(new Animated.Value(0)).current;
+  const x = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const run = () => {
+      y.setValue(0); o.setValue(0.8); x.setValue((Math.random() - 0.5) * 20);
+      Animated.parallel([
+        Animated.timing(y, { toValue: -120, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(o, { toValue: 0, duration: 1500, delay, useNativeDriver: true }),
+        Animated.timing(x, { toValue: (Math.random() - 0.5) * 30, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(() => run());
+    };
+    run();
+    return () => { y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
+  }, [delay, y, o, x]);
+  return (
+    <Animated.View style={{ position: "absolute", bottom: 10, left: "50%", marginLeft: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: o, transform: [{ translateY: y }, { translateX: x }] }} />
+  );
+}
+
+// Glowing splint test animation
+function SplintTest({ active, onComplete }) {
+  const glow = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (active) {
+      y.setValue(0);
+      glow.setValue(0);
+      Animated.parallel([
+        Animated.timing(y, { toValue: -60, duration: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.delay(1000).start(() => {
+          Animated.parallel([
+            Animated.timing(y, { toValue: 0, duration: 500, useNativeDriver: true }),
+            Animated.timing(glow, { toValue: 0, duration: 500, useNativeDriver: true }),
+          ]).start(() => onComplete && onComplete());
+        });
+      });
+    }
+  }, [active, y, glow, onComplete]);
+  return (
+    <Animated.View style={{ position: "absolute", bottom: 80, right: -30, transform: [{ translateY: y }] }}>
+      <Svg width={40} height={80} viewBox="0 0 40 80">
+        <Path d="M20 0 L20 70" stroke="#92400e" strokeWidth="4" />
+        <Path d="M20 0 L14 10 L26 10 Z" fill={glow.interpolate({ inputRange: [0, 1], outputRange: ["#f59e0b", "#fbbf24"] })} />
+        <Animated.View style={{ position: "absolute", top: -10, left: 5, right: 5, height: 20, borderRadius: 10, backgroundColor: "#fbbf24", opacity: glow }} />
+      </Svg>
+    </Animated.View>
+  );
+}
 
 export default function ChemOxygenLab() {
   const theme = useTheme();
@@ -23,6 +77,8 @@ export default function ChemOxygenLab() {
   const method = cfg?.method || METHODS[0];
   const [reacting, setReacting] = useState(false);
   const [collected, setCollected] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testDone, setTestDone] = useState(false);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState(method.id === "kmno4" ? "Heat the potassium manganate(VII)." : "Add MnO₂ to the hydrogen peroxide.");
   const [reportOpen, setReportOpen] = useState(false);
@@ -30,7 +86,8 @@ export default function ChemOxygenLab() {
   const [saved, setSaved] = useState(false);
 
   const fill = useRef(new Animated.Value(0)).current;
-  const animTo = (a, v, d = 800) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+  const liquidFill = useRef(new Animated.Value(0)).current;
+  const animTo = (a, v, d = 800, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 14 };
 
   function react() {
@@ -38,22 +95,40 @@ export default function ChemOxygenLab() {
     haptic.light();
     setReacting(true);
     setMessage("Gas is being produced — lead it into the gas jar.");
+    // Animate liquid in boiling tube
+    animTo(liquidFill, 0.3, 1000);
+    // Start gas collection after delay
     Animated.delay(1200).start(() => setCollected(true));
   }
 
   function collect() {
     if (!reacting || collected) return;
     haptic.light();
-    animTo(fill, 1, 1000);
-    Animated.delay(1050).start(() => {
-      setStatus("success");
-      setMessage("✅ Oxygen collected! It relights a glowing splint.");
+    animTo(fill, 1, 2000);
+    animTo(liquidFill, 0.1, 2000);
+    Animated.delay(2100).start(() => {
+      setMessage("✅ Gas jar full of oxygen. Now test with a glowing splint.");
     });
   }
 
+  function testOxygen() {
+    if (!collected || testing) return;
+    haptic.light();
+    setTesting(true);
+    setMessage("Testing with glowing splint…");
+    // The SplintTest component will handle animation and call onComplete
+  }
+
+  function onTestComplete() {
+    setTesting(false);
+    setTestDone(true);
+    setStatus("success");
+    setMessage("✅ Oxygen confirmed! The glowing splint relit brightly.");
+  }
+
   function reset() {
-    setReacting(false); setCollected(false); setStatus("idle"); setSaved(false); setNotes("");
-    fill.setValue(0);
+    setReacting(false); setCollected(false); setTesting(false); setTestDone(false); setStatus("idle"); setSaved(false); setNotes("");
+    fill.setValue(0); liquidFill.setValue(0.5);
     setMessage(method.id === "kmno4" ? "Heat the potassium manganate(VII)." : "Add MnO₂ to the hydrogen peroxide.");
   }
 
@@ -68,15 +143,14 @@ export default function ChemOxygenLab() {
       equation: method.formula,
       result: "O₂ collected (relights glowing splint)",
       status: "success",
-      summary: `Used ${method.name} (${method.formula}) to prepare oxygen, collected in a gas jar.`,
+      summary: `Used ${method.name} (${method.formula}) to prepare oxygen, collected in a gas jar. Glowing splint test positive.`,
       notes: notes.trim(),
     };
     const ok = await labStorage.saveReport(report);
     if (ok) { setSaved(true); setMessage("📝 Report saved."); } else setMessage("Could not save the report.");
   }
 
-  const step = reacting ? (collected ? 1 : 0) : 0;
-  const stepNum = status === "success" ? 3 : reacting ? (collected ? 2 : 1) : 0;
+  const stepNum = status === "success" ? 4 : testing ? 3 : collected ? 2 : reacting ? 1 : 0;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={["top", "left", "right"]}>
@@ -103,16 +177,40 @@ export default function ChemOxygenLab() {
         <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
           <View style={{ flexDirection: "column", alignItems: "center" }}>
             <BunsenBurner flame={reacting} />
-            <BoilingTube fill={0.5} color="#fca5a5" />
+            <BoilingTube fill={liquidFill} color="#fca5a5" />
+            {/* Gas bubbles in boiling tube */}
+            {reacting && !collected && (
+              <View style={{ position: "absolute", bottom: 40, left: 0, right: 0, height: 60, alignItems: "center" }}>
+                {[0, 1, 2].map((i) => <GasBubble key={i} delay={i * 300} color="#fca5a5" />)}
+              </View>
+            )}
           </View>
           <Svg width={60} height={40} viewBox="0 0 60 40" style={{ marginBottom: 60 }}>
             <Path d="M10 5 L10 30 L50 30 L50 5" stroke="#94a3b8" strokeWidth="3" fill="none" />
+            {/* Delivery tube bubbles */}
+            {reacting && (
+              <Svg width={60} height={40} viewBox="0 0 60 40" style={{ position: "absolute", top: 0, left: 0 }}>
+                {[0, 1].map((i) => (
+                  <GasBubble key={i} delay={i * 400} color="#93c5fd" />
+                ))}
+              </Svg>
+            )}
           </Svg>
           <Animated.View style={{ opacity: fill }}>
             <GasJar fill={1} color="#93c5fd" />
+            {/* Bubbles rising in gas jar during collection */}
+            {collected && !testDone && (
+              <View style={{ position: "absolute", bottom: 20, left: 0, right: 0, height: 100, alignItems: "center" }}>
+                {[0, 1, 2, 3].map((i) => <GasBubble key={i} delay={i * 250} color="#93c5fd" />)}
+              </View>
+            )}
           </Animated.View>
+          {/* Splint test animation */}
+          <SplintTest active={testing} onComplete={onTestComplete} />
         </View>
-        <Text style={labelStyle}>{collected ? "O₂ collected" : reacting ? "Gas flowing…" : "Apparatus set up"}</Text>
+        <Text style={labelStyle}>
+          {testDone ? "O₂ confirmed! 🔥" : testing ? "Testing with glowing splint…" : collected ? "O₂ collected — test it" : reacting ? "Gas flowing…" : "Apparatus set up"}
+        </Text>
       </View>
 
       <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 18, shadowColor: "#000", shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 10 }}>
@@ -128,9 +226,10 @@ export default function ChemOxygenLab() {
             </TouchableOpacity>
           </>
         ) : (
-          <View style={{ flexDirection: "row" }}>
-            <Btn label="① React" onPress={react} disabled={reacting} />
-            <Btn label="② Collect" onPress={collect} disabled={!reacting || collected} accent={ACCENT} />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+            <Btn label="① React" onPress={react} disabled={reacting} style={{ margin: 3 }} />
+            <Btn label="② Collect" onPress={collect} disabled={!reacting || collected} accent={ACCENT} style={{ margin: 3 }} />
+            <Btn label="③ Test O₂" onPress={testOxygen} disabled={!collected || testing || testDone} accent="#f59e0b" style={{ margin: 3 }} />
           </View>
         )}
       </View>
@@ -150,7 +249,7 @@ export default function ChemOxygenLab() {
               <Text style={{ fontSize: 12, fontWeight: "600", color: theme.colors.textMuted, marginBottom: 6 }}>Your report / observations</Text>
               <TextInput
                 style={{ borderWidth: 1, borderColor: "#e5e7eb", borderRadius: 10, padding: 12, fontSize: 14, color: theme.colors.text, height: 90, textAlignVertical: "top" }}
-                placeholder="e.g. The gas jar filled from the bottom up as oxygen displaced the air."
+                placeholder="e.g. The gas jar filled from the bottom up as oxygen displaced the air. Glowing splint relit instantly."
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -175,13 +274,13 @@ export default function ChemOxygenLab() {
   );
 }
 
-function Btn({ label, onPress, disabled, accent = ACCENT, full }) {
+function Btn({ label, onPress, disabled, accent = ACCENT, full, style }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.85}
-      style={{ flex: full ? undefined : 1, width: full ? "100%" : undefined, backgroundColor: disabled ? "#e5e7eb" : accent, borderRadius: 11, paddingVertical: 12, alignItems: "center", justifyContent: "center", marginHorizontal: full ? 0 : 3, opacity: disabled ? 0.55 : 1 }}
+      style={{ flex: full ? undefined : 1, width: full ? "100%" : undefined, backgroundColor: disabled ? "#e5e7eb" : accent, borderRadius: 11, paddingVertical: 12, alignItems: "center", justifyContent: "center", marginHorizontal: full ? 0 : 3, opacity: disabled ? 0.55 : 1, ...style }}
     >
       <Text style={{ color: disabled ? "#94a3b8" : "#fff", fontWeight: "800", fontSize: full ? 14 : 11.5 }} numberOfLines={1}>{label}</Text>
     </TouchableOpacity>
