@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import FlipCard from "../../titration/FlipCard";
 import { useTheme } from "../../../theme";
 import { haptic } from "../../../haptic";
-import { IONIC_PAIRS } from "./bonding-data";
+import { BONDING_PAIRS as IONIC_PAIRS } from "./bonding-data";
 
 const GREEN = "#16a34a";
 
