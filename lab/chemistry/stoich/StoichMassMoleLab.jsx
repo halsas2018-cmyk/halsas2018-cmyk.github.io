@@ -153,11 +153,6 @@ export default function StoichMassMoleLab() {
 
   const step = status === "success" ? 2 : status === "running" || started ? 1 : 0;
 
-  // ---- decorative SVG particles (reactants fade out, product fades in) ----
-  const Particle = ({ x, y, r, color, o }) => (
-    <Circle cx={x} cy={y} r={r} fill={color} opacity={o} />
-  );
-
   // Predictable positions for reactant molecules (in a 120x120 local box).
   const reactantDots = (color, n) =>
     Array.from({ length: n }).map((_, i) => ({
