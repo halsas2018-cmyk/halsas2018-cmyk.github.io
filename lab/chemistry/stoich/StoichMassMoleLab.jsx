@@ -11,10 +11,8 @@ import {
   Easing,
   KeyboardAvoidingView,
   Platform,
-  Svg,
-  Path,
-  Circle,
 } from "react-native";
+import { Svg, Path, Circle } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
