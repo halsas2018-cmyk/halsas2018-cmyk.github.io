@@ -296,7 +296,7 @@ export default function ChemOxygenLab() {
             <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
               Result: O₂ collected (relights glowing splint) ✓
             </Text>
-          </Text>
+          </View>
         </Animated.View>
 
         {status === "success" ? (
