@@ -154,25 +154,28 @@ export default function ChemSoapLab() {
       </View>
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Animated.View style={{ opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }}>
-          <Beaker fill={liquidFill} color="#fde68a" label="fat+NaOH" />
-          {/* Stirring rod animation */}
-          <Animated.View style={{ position: "absolute", top: -20, left: "50%", marginLeft: -2, transform: [{ rotate: stirSpin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) }] }}>
-            <View style={{ width: 4, height: 80, backgroundColor: "#cbd5e1", borderRadius: 2 }} />
+        {/* Fixed-size beaker reference container (matches Beaker SVG dimensions) */}
+        <View style={{ width: 120, height: 180, position: "relative" }}>
+          <Animated.View style={{ opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }), position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+            <Beaker fill={liquidFill} color="#fde68a" label="fat+NaOH" />
+            {/* Stirring rod animation - centered in beaker */}
+            <Animated.View style={{ position: "absolute", top: 10, left: "50%", marginLeft: -2, transform: [{ rotate: stirSpin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) }] }}>
+              <View style={{ width: 4, height: 100, backgroundColor: "#cbd5e1", borderRadius: 2 }} />
+            </Animated.View>
+            {/* Bubbles during saponification - inside beaker liquid area */}
+            {showBubbles && (
+              <View style={{ position: "absolute", bottom: 40, left: 15, right: 15, height: 80, alignItems: "center" }}>
+                {[0, 1, 2, 3, 4].map((i) => <Bubble key={i} delay={i * 200} color="#fff" size={6 + i} />)}
+              </View>
+            )}
+            {/* Soap curds forming - at bottom of beaker */}
+            {showCurds && (
+              <View style={{ position: "absolute", bottom: 35, left: 15, right: 15, height: 30, alignItems: "center" }}>
+                {[0, 1, 2, 3, 4].map((i) => <SoapCurd key={i} delay={0} index={i} />)}
+              </View>
+            )}
           </Animated.View>
-          {/* Bubbles during saponification */}
-          {showBubbles && (
-            <View style={{ position: "absolute", bottom: 40, left: 0, right: 0, height: 80, alignItems: "center" }}>
-              {[0, 1, 2, 3, 4].map((i) => <Bubble key={i} delay={i * 200} color="#fff" size={6 + i} />)}
-            </View>
-          )}
-          {/* Soap curds forming */}
-          {showCurds && (
-            <View style={{ position: "absolute", bottom: 25, left: 0, right: 0, height: 30, alignItems: "center" }}>
-              {[0, 1, 2, 3, 4].map((i) => <SoapCurd key={i} delay={0} index={i} />)}
-            </View>
-          )}
-        </Animated.View>
+        </View>
         <Text style={labelStyle}>
           {step === 0 ? `${fat.name} + NaOH` : step === 1 ? "Saponification in progress… 🫧" : step === 2 ? "Adding salt — curds forming…" : "Soap curds ready! 🧼"}
         </Text>
