@@ -11,11 +11,8 @@ import {
   Easing,
   KeyboardAvoidingView,
   Platform,
-  Svg,
-  G,
-  Circle,
-  Polygon,
 } from "react-native";
+import { Svg, G, Circle, Polygon } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -356,16 +353,21 @@ export default function SolubilityCrystalLab() {
 function Bubble({ delay, color }) {
   const y = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
+  const mounted = useRef(true);
   useEffect(() => {
+    mounted.current = true;
     const run = () => {
+      if (!mounted.current) return;
       y.setValue(0); o.setValue(0.7);
       Animated.parallel([
         Animated.timing(y, { toValue: -80, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(o, { toValue: 0, duration: 1500, delay, useNativeDriver: true }),
-      ]).start(() => run());
+      ]).start(() => {
+        if (mounted.current) run();
+      });
     };
     run();
-    return () => { y.stopAnimation(); o.stopAnimation(); };
+    return () => { mounted.current = false; y.stopAnimation(); o.stopAnimation(); };
   }, [delay, y, o]);
   return (
     <Animated.View style={{ position: "absolute", bottom: 20, left: 20 + (delay % 5) * 20, width: 6, height: 6, borderRadius: 3, backgroundColor: color || "#a3e635", opacity: o, transform: [{ translateY: y }] }} />
