@@ -170,7 +170,13 @@ export function BoilingTube({ w = 46, h = 150, fill = 0, color = "#60a5fa" }) {
           <Stop offset="1" stopColor={C.glassDark} stopOpacity="0.6" />
         </LinearGradient>
       </Defs>
-      {fill > 0 ? <Rect x={4} y={h - 12 - fh} width={w - 8} height={fh} fill={color} opacity="0.85" /> : null}
+      {fill > 0 ? (
+        <Path
+          d={`M4 ${h - 8 - fh} L${w - 4} ${h - 8 - fh} L${w - 4} ${h - 8} Q${w / 2} ${h + 10} 4 ${h - 8} Z`}
+          fill={color}
+          opacity="0.85"
+        />
+      ) : null}
       <Path
         d={`M4 8 L${w - 4} 8 L${w - 4} ${h - 8} Q${w / 2} ${h + 10} 4 ${h - 8} Z`}
         fill="url(#bt)"
@@ -438,6 +444,15 @@ export function Protractor({ cx, cy, r = 60, color = "#cbd5e1" }) {
       <Path d={`M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`} fill={color} opacity="0.25" stroke={color} strokeWidth="1.5" />
       <Line x1={cx} y1={cy} x2={cx + r} y2={cy} stroke={color} strokeWidth="1" />
       <Line x1={cx} y1={cy} x2={cx - r} y2={cy} stroke={color} strokeWidth="1" />
+      {/* Degree markings every 15° */}
+      {[0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const x1 = cx + r * Math.cos(rad);
+        const y1 = cy - r * Math.sin(rad);
+        const x2 = cx + (r - 8) * Math.cos(rad);
+        const y2 = cy - (r - 8) * Math.sin(rad);
+        return <Line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={deg % 30 === 0 ? 1.5 : 1} />;
+      })}
     </G>
   );
 }
@@ -492,10 +507,10 @@ export function Ground({ w = 320, h = 24 }) {
 }
 
 export function Trajectory({ w = 320, h = 200, color = "#f59e0b" }) {
-  // gentle parabola for decoration
+  // gentle parabola for decoration - control point at h/3 for natural arc
   return (
     <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ position: "absolute", top: 0, left: 0 }}>
-      <Path d={`M20 ${h - 20} Q${w / 2} -40 ${w - 20} ${h - 20}`} fill="none" stroke={color} strokeWidth="2" strokeDasharray="6 6" />
+      <Path d={`M20 ${h - 20} Q${w / 2} ${h / 3} ${w - 20} ${h - 20}`} fill="none" stroke={color} strokeWidth="2" strokeDasharray="6 6" />
     </Svg>
   );
 }
@@ -600,7 +615,7 @@ export function Chloroplast({ w = 90, h = 50 }) {
   );
 }
 
-export function LeafSection({ w = 150, h = 90, lit = true }) {
+export function LeafSection({ w = 150, h = 90, lit = true, showEquation = true }) {
   return (
     <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <Rect x={8} y={8} width={w - 16} height={h - 16} rx={8} fill="#bbf7d0" stroke="#16a34a" strokeWidth="3" />
@@ -610,7 +625,9 @@ export function LeafSection({ w = 150, h = 90, lit = true }) {
       <Ellipse cx={w / 2 - 9} cy={h / 2} rx={6} ry={9} fill="#4ade80" />
       <Ellipse cx={w / 2 + 9} cy={h / 2} rx={6} ry={9} fill="#4ade80" />
       {lit ? <Arrow x1={10} y1={h / 2} x2={40} y2={h / 2} color="#f59e0b" label="light" /> : null}
-      <Text x={w / 2} y={h - 4} fontSize="9" fill={C.inkSoft} textAnchor="middle">CO₂ + H₂O → O₂ + glucose</Text>
+      {showEquation && (
+        <Text x={w / 2} y={h - 4} fontSize="9" fill={C.inkSoft} textAnchor="middle">CO₂ + H₂O → O₂ + glucose</Text>
+      )}
     </Svg>
   );
 }
