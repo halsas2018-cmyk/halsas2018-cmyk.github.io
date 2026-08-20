@@ -196,7 +196,7 @@ export default function ChemOxygenLab() {
       </View>
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-end", position: "relative" }}>
           <View style={{ flexDirection: "column", alignItems: "center" }}>
             <BunsenBurner flame={reacting} />
             <BoilingTube fill={liquidFill} color="#fca5a5" />
@@ -229,6 +229,30 @@ export default function ChemOxygenLab() {
           </Animated.View>
           {/* Splint test animation */}
           <SplintTest active={testing} onComplete={onTestComplete} />
+          
+          {/* Endpoint checkmark animation */}
+          {status === "success" && (
+            <View style={{ position: "absolute", top: -60, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
+              <Animated.View style={{ 
+                width: 60, height: 60, borderRadius: 30, 
+                backgroundColor: ACCENT, 
+                alignItems: "center", justifyContent: "center",
+                transform: [{ scale: endpointScale }],
+                shadowColor: ACCENT,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.4,
+                shadowRadius: 8,
+                elevation: 8,
+              }}>
+                <Text style={{ fontSize: 28, color: "#fff" }}>✓</Text>
+              </Animated.View>
+              <View style={{ marginTop: 6, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 6, borderWidth: 1, borderColor: ACCENT }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", color: ACCENT, textAlign: "center" }}>
+                  Oxygen confirmed — glowing splint relit!
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
         <Text style={labelStyle}>
           {testDone ? "O₂ confirmed! 🔥" : testing ? "Testing with glowing splint…" : collected ? "O₂ collected — test it" : reacting ? "Gas flowing…" : "Apparatus set up"}
