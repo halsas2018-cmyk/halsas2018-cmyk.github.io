@@ -268,12 +268,12 @@ export default function AcidsSaltPrepLab() {
             <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 14 }}>↺ Reset Experiment</Text>
           </TouchableOpacity>
         ) : status === "success" ? (
-          <>
+          <View style={{ width: "100%" }}>
             <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent={GREEN} full />
             <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
               <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset Experiment</Text>
             </TouchableOpacity>
-          </>
+          </View>
         ) : !acidPoured ? (
           <View>
             <ChoiceRow label="Acid" options={ACIDS} selected={acid} onSelect={setAcid} theme={theme} />
