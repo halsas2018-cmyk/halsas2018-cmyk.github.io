@@ -17,17 +17,22 @@ function GasBubble({ delay, color = "#93c5fd" }) {
   const y = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
   const x = useRef(new Animated.Value(0)).current;
+  const mounted = useRef(true);
   useEffect(() => {
+    mounted.current = true;
     const run = () => {
+      if (!mounted.current) return;
       y.setValue(0); o.setValue(0.8); x.setValue((Math.random() - 0.5) * 20);
       Animated.parallel([
         Animated.timing(y, { toValue: -120, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(o, { toValue: 0, duration: 1500, delay, useNativeDriver: true }),
         Animated.timing(x, { toValue: (Math.random() - 0.5) * 30, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      ]).start(() => run());
+      ]).start(() => {
+        if (mounted.current) run();
+      });
     };
     run();
-    return () => { y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
+    return () => { mounted.current = false; y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
   }, [delay, y, o, x]);
   return (
     <Animated.View style={{ position: "absolute", bottom: 10, left: "50%", marginLeft: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: o, transform: [{ translateY: y }, { translateX: x }] }} />
@@ -38,7 +43,9 @@ function GasBubble({ delay, color = "#93c5fd" }) {
 function SplintTest({ active, onComplete }) {
   const glow = useRef(new Animated.Value(0)).current;
   const y = useRef(new Animated.Value(0)).current;
+  const mounted = useRef(true);
   useEffect(() => {
+    mounted.current = true;
     if (active) {
       y.setValue(0);
       glow.setValue(0);
@@ -46,14 +53,19 @@ function SplintTest({ active, onComplete }) {
         Animated.timing(y, { toValue: -60, duration: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(glow, { toValue: 1, duration: 500, useNativeDriver: true }),
       ]).start(() => {
+        if (!mounted.current) return;
         Animated.delay(1000).start(() => {
+          if (!mounted.current) return;
           Animated.parallel([
             Animated.timing(y, { toValue: 0, duration: 500, useNativeDriver: true }),
             Animated.timing(glow, { toValue: 0, duration: 500, useNativeDriver: true }),
-          ]).start(() => onComplete && onComplete());
+          ]).start(() => {
+            if (mounted.current) onComplete && onComplete();
+          });
         });
       });
     }
+    return () => { mounted.current = false; y.stopAnimation(); glow.stopAnimation(); };
   }, [active, y, glow, onComplete]);
   return (
     <Animated.View style={{ position: "absolute", bottom: 80, right: -30, transform: [{ translateY: y }] }}>
@@ -87,6 +99,8 @@ export default function ChemOxygenLab() {
 
   const fill = useRef(new Animated.Value(0)).current;
   const liquidFill = useRef(new Animated.Value(0)).current;
+  const endpointScale = useRef(new Animated.Value(0)).current;
+  const resultCardY = useRef(new Animated.Value(100)).current;
   const animTo = (a, v, d = 800, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 14 };
 
@@ -124,11 +138,19 @@ export default function ChemOxygenLab() {
     setTestDone(true);
     setStatus("success");
     setMessage("✅ Oxygen confirmed! The glowing splint relit brightly.");
+    // Trigger endpoint animations
+    Animated.sequence([
+      Animated.timing(endpointScale, { toValue: 1.2, duration: 300, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+      Animated.timing(endpointScale, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start();
+    Animated.timing(resultCardY, { toValue: 0, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
   }
 
   function reset() {
     setReacting(false); setCollected(false); setTesting(false); setTestDone(false); setStatus("idle"); setSaved(false); setNotes("");
     fill.setValue(0); liquidFill.setValue(0.5);
+    endpointScale.setValue(0);
+    resultCardY.setValue(100);
     setMessage(method.id === "kmno4" ? "Heat the potassium manganate(VII)." : "Add MnO₂ to the hydrogen peroxide.");
   }
 
@@ -218,13 +240,48 @@ export default function ChemOxygenLab() {
           <Text style={{ fontSize: 13, lineHeight: 19, color: theme.colors.textMuted }}>{message}</Text>
         </View>
 
+        {/* Result card - slides up on success */}
+        <Animated.View style={{ 
+          position: "absolute", 
+          bottom: 20, 
+          left: 16, 
+          right: 16,
+          backgroundColor: "#f0fdf4",
+          borderWidth: 2,
+          borderColor: ACCENT,
+          borderRadius: 16,
+          padding: 16,
+          transform: [{ translateY: resultCardY }],
+          zIndex: 20,
+          shadowColor: ACCENT,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          elevation: 10,
+        }}>
+          <Text style={{ fontSize: 16, fontWeight: "900", color: ACCENT, textAlign: "center", marginBottom: 8 }}>
+            🎉 Experiment Complete!
+          </Text>
+          <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, padding: 10 }}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center" }}>
+              Method: {method.name}
+            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
+              Equation: {method.formula}
+            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
+              Result: O₂ collected (relights glowing splint) ✓
+            </Text>
+          </Text>
+        </Animated.View>
+
         {status === "success" ? (
-          <>
+          <View style={{ width: "100%" }}>
             <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent={ACCENT} full />
             <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
               <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset Experiment</Text>
             </TouchableOpacity>
-          </>
+          </View>
         ) : (
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
             <Btn label="① React" onPress={react} disabled={reacting} style={{ margin: 3 }} />
