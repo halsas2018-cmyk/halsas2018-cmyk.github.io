@@ -282,18 +282,25 @@ export default function StatesGasLawsLab() {
             <View style={{ position: "absolute", bottom: 6 + colHeight + 12, width: 8, height: 210 - colHeight - 12, backgroundColor: "#64748b" }} />
             {/* Endpoint indicator for Boyle */}
             {showSuccess && (
-              <View style={{ position: "absolute", top: -40, left: 0, right: 0, alignItems: "center" }}>
+              <View style={{ position: "absolute", top: -80, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
                 <Animated.View style={{ 
-                  width: 60, height: 60, borderRadius: 30, 
+                  width: 70, height: 70, borderRadius: 35, 
                   backgroundColor: GREEN, 
                   alignItems: "center", justifyContent: "center",
-                  transform: [{ scale: endpointScale }]
+                  transform: [{ scale: endpointScale }],
+                  shadowColor: GREEN,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 8,
+                  elevation: 8,
                 }}>
-                  <Text style={{ fontSize: 28, color: "#fff" }}>✓</Text>
+                  <Text style={{ fontSize: 32, color: "#fff" }}>✓</Text>
                 </Animated.View>
-                <Text style={{ marginTop: 6, fontSize: 12, fontWeight: "800", color: GREEN }}>
-                  {scenario.label.includes("pressure") ? "Pressure doubled → Volume halved" : "Volume doubled → Pressure halved"}
-                </Text>
+                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: GREEN }}>
+                  <Text style={{ fontSize: 13, fontWeight: "800", color: GREEN, textAlign: "center" }}>
+                    {scenario.label.includes("pressure") ? "Pressure doubled → Volume halved" : "Volume doubled → Pressure halved"}
+                  </Text>
+                </View>
               </View>
             )}
             <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 10 }}>
@@ -312,18 +319,25 @@ export default function StatesGasLawsLab() {
             <View style={{ position: "absolute", bottom: -6, width: 30, height: 16, backgroundColor: "transparent", borderLeftWidth: 2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: BLUE, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }} />
             {/* Endpoint indicator for Charles */}
             {showSuccess && (
-              <View style={{ position: "absolute", top: -40, left: 0, right: 0, alignItems: "center" }}>
+              <View style={{ position: "absolute", top: -80, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
                 <Animated.View style={{ 
-                  width: 60, height: 60, borderRadius: 30, 
+                  width: 70, height: 70, borderRadius: 35, 
                   backgroundColor: GREEN, 
                   alignItems: "center", justifyContent: "center",
-                  transform: [{ scale: endpointScale }]
+                  transform: [{ scale: endpointScale }],
+                  shadowColor: GREEN,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 8,
+                  elevation: 8,
                 }}>
-                  <Text style={{ fontSize: 28, color: "#fff" }}>✓</Text>
+                  <Text style={{ fontSize: 32, color: "#fff" }}>✓</Text>
                 </Animated.View>
-                <Text style={{ marginTop: 6, fontSize: 12, fontWeight: "800", color: GREEN }}>
-                  Temperature changed → Volume changed proportionally (V ∝ T)
-                </Text>
+                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: GREEN }}>
+                  <Text style={{ fontSize: 13, fontWeight: "800", color: GREEN, textAlign: "center" }}>
+                    Temperature changed → Volume changed proportionally (V ∝ T)
+                  </Text>
+                </View>
               </View>
             )}
             <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 12 }}>
@@ -345,15 +359,21 @@ export default function StatesGasLawsLab() {
         {showSuccess && (
           <View style={{ 
             position: "absolute", 
-            bottom: -120, 
-            left: 20, 
-            right: 20,
+            bottom: 20, 
+            left: 16, 
+            right: 16,
             backgroundColor: "#f0fdf4",
             borderWidth: 2,
             borderColor: GREEN,
             borderRadius: 16,
             padding: 16,
-            transform: [{ translateY: resultCardY }]
+            transform: [{ translateY: resultCardY }],
+            zIndex: 20,
+            shadowColor: GREEN,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 10,
           }}>
             <Text style={{ fontSize: 16, fontWeight: "900", color: GREEN, textAlign: "center", marginBottom: 8 }}>
               🎉 Experiment Complete!
