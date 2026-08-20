@@ -362,16 +362,21 @@ export default function AcidsSaltPrepLab() {
 function Steam({ delay }) {
   const y = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
+  const mounted = useRef(true);
   useEffect(() => {
+    mounted.current = true;
     const run = () => {
+      if (!mounted.current) return;
       y.setValue(0); o.setValue(0.5);
       Animated.parallel([
         Animated.timing(y, { toValue: -50, duration: 1300, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(o, { toValue: 0, duration: 1300, delay, useNativeDriver: true }),
-      ]).start(() => run());
+      ]).start(() => {
+        if (mounted.current) run();
+      });
     };
     run();
-    return () => { y.stopAnimation(); o.stopAnimation(); };
+    return () => { mounted.current = false; y.stopAnimation(); o.stopAnimation(); };
   }, [delay, y, o]);
   return (
     <Animated.View style={{ position: "absolute", top: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: "#e2e8f0", opacity: o, transform: [{ translateY: y }] }} />
@@ -382,11 +387,13 @@ function Steam({ delay }) {
 function Drop({ color, onDone }) {
   const y = useRef(new Animated.Value(-14)).current;
   const o = useRef(new Animated.Value(0.95)).current;
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
     Animated.parallel([
       Animated.timing(y, { toValue: 110, duration: 520, easing: Easing.in(Easing.quad), useNativeDriver: true }),
       Animated.timing(o, { toValue: 0, duration: 520, useNativeDriver: true }),
-    ]).start(() => onDone && onDone());
+    ]).start(() => onDoneRef.current && onDoneRef.current());
   }, []);
   return (
     <Animated.View
@@ -408,11 +415,12 @@ function Drop({ color, onDone }) {
 
 // Student choice row: tap a chip to select (no pre-selection).
 function ChoiceRow({ label, options, selected, onSelect, theme }) {
+  const safeTheme = theme || { colors: { textMuted: "#64748b" } };
   return (
     <View style={{ marginBottom: 8 }}>
       <Text style={{ fontSize: 11, fontWeight: "800", color: "#475569", marginBottom: 4 }}>{label}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 4 }}>
-        {options.map((o) => {
+        {options?.map((o) => {
           const on = selected && selected.id === o.id;
           return (
             <TouchableOpacity
@@ -431,8 +439,8 @@ function ChoiceRow({ label, options, selected, onSelect, theme }) {
                 opacity: on ? 1 : 0.95,
               }}
             >
-              <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: o.color || "#94a3b8", marginRight: 5 }} />
-              <Text style={{ fontSize: 11, fontWeight: on ? "800" : "600", color: on ? "#14532d" : theme.colors.textMuted }}>{o.formula || o.name}</Text>
+              <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: o?.color || "#94a3b8", marginRight: 5 }} />
+              <Text style={{ fontSize: 11, fontWeight: on ? "800" : "600", color: on ? "#14532d" : safeTheme.colors.textMuted }}>{o?.formula || o?.name || ""}</Text>
             </TouchableOpacity>
           );
         })}
