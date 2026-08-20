@@ -11,8 +11,8 @@ import {
   Easing,
   KeyboardAvoidingView,
   Platform,
-  Svg,
 } from "react-native";
+import { Svg } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -311,16 +311,21 @@ export default function BiochemEnzymeLab() {
 function Bubble({ delay, color }) {
   const y = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
+  const mounted = useRef(true);
   useEffect(() => {
+    mounted.current = true;
     const run = () => {
+      if (!mounted.current) return;
       y.setValue(0); o.setValue(0.7);
       Animated.parallel([
         Animated.timing(y, { toValue: -118, duration: 1200, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(o, { toValue: 0, duration: 1200, delay, useNativeDriver: true }),
-      ]).start(() => run());
+      ]).start(() => {
+        if (mounted.current) run();
+      });
     };
     run();
-    return () => { y.stopAnimation(); o.stopAnimation(); };
+    return () => { mounted.current = false; y.stopAnimation(); o.stopAnimation(); };
   }, [delay, y, o]);
   return (
     <Animated.View style={{ position: "absolute", bottom: 6, left: 6 + (delay % 3) * 10, width: 7, height: 7, borderRadius: 3.5, backgroundColor: color || "#ffffff", opacity: o, transform: [{ translateY: y }] }} />
