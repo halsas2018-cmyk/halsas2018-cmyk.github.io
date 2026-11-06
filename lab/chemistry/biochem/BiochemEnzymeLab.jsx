@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Svg } from "react-native-svg";
+import Svg from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -213,11 +213,13 @@ export default function BiochemEnzymeLab() {
           <View style={{ position: "absolute", left: 250, top: 120 }}><GasJar fill={gasFrac} color="#93c5fd" /></View>
 
           {/* Delivery tube (H₂O₂/O₂) + labels overlay */}
-          <Svg width={340} height={300} viewBox="0 0 340 300" style={{ position: "absolute", left: 0, top: 0 }} pointerEvents="none">
-            <Arrow x1={92} y1={62} x2={248} y2={132} color="#94a3b8" w={3} label="O₂" />
-            <Label x={89} y={48} text="Catalase + H₂O₂" color="#475569" size={11} />
-            <Label x={285} y={114} text="O₂ collected" color="#475569" size={11} />
-          </Svg>
+          <View style={{ position: "absolute", left: 0, top: 0 }} pointerEvents="none">
+            <Svg width={340} height={300} viewBox="0 0 340 300">
+              <Arrow x1={92} y1={62} x2={248} y2={132} color="#94a3b8" w={3} label="O₂" />
+              <Label x={89} y={48} text="Catalase + H₂O₂" color="#475569" size={11} />
+              <Label x={285} y={114} text="O₂ collected" color="#475569" size={11} />
+            </Svg>
+          </View>
 
           {/* Rising bubbles inside the boiling tube */}
           {showBubbles ? (

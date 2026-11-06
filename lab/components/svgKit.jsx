@@ -66,15 +66,16 @@ export function Label({ x, y, text, color = C.ink, size = 10 }) {
   );
 }
 
-export function Thermometer({ x = 0, y = 0, h = 90, temp = 0.5, color = "#ef4444" }) {
-  const fillH = (h - 16) * Math.max(0, Math.min(1, temp));
+export function Thermometer({ w = 20, h = 90, temp = 0.5, color = "#ef4444" }) {
+  const t = typeof temp === "number" ? temp : 0.5;
+  const fillH = (h - 16) * Math.max(0, Math.min(1, t));
   return (
-    <G x={x} y={y}>
+    <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <Rect x={6} y={0} width={8} height={h - 10} rx={4} fill={C.white} stroke={C.glassEdge} strokeWidth={1.5} />
-      <Circle cx={10} cy={h - 6} r={9} fill={C.white} stroke={C.glassEdge} strokeWidth={1.5} />
-      <Rect x={8} y={h - 6 - fillH} width={4} height={fillH} fill={color} />
-      <Circle cx={10} cy={h - 6} r={5} fill={color} />
-    </G>
+      <Circle cx={10} cy={h - 8} r={8} fill={C.white} stroke={C.glassEdge} strokeWidth={1.5} />
+      <Rect x={8} y={h - 8 - fillH} width={4} height={fillH} fill={color} />
+      <Circle cx={10} cy={h - 8} r={5} fill={color} />
+    </Svg>
   );
 }
 

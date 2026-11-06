@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StatusBar, Modal, ScrollView, Animated, Easing, KeyboardAvoidingView, Platform, TextInput } from "react-native";
-import { Svg, Path, Circle } from "react-native-svg";
+import Svg, { Path, Circle } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -98,11 +98,21 @@ export default function ChemOxygenLab() {
   const [saved, setSaved] = useState(false);
 
   const fill = useRef(new Animated.Value(0)).current;
-  const liquidFill = useRef(new Animated.Value(0)).current;
+  const liquidFill = useRef(new Animated.Value(0.5)).current;
+  const [liquidFillState, setLiquidFillState] = useState(0.5);
   const endpointScale = useRef(new Animated.Value(0)).current;
   const resultCardY = useRef(new Animated.Value(100)).current;
   const animTo = (a, v, d = 800, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 14 };
+
+  // Sync liquidFill Animated.Value → plain state for BoilingTube
+  useEffect(() => {
+    const id = liquidFill.addListener(({ value }) => setLiquidFillState(value));
+    return () => {
+      liquidFill.removeListener(id);
+      liquidFill.stopAnimation();
+    };
+  }, [liquidFill]);
 
   function react() {
     if (reacting) return;
@@ -199,7 +209,7 @@ export default function ChemOxygenLab() {
         <View style={{ flexDirection: "row", alignItems: "flex-end", position: "relative" }}>
           <View style={{ flexDirection: "column", alignItems: "center" }}>
             <BunsenBurner flame={reacting} />
-            <BoilingTube fill={liquidFill} color="#fca5a5" />
+            <BoilingTube fill={liquidFillState} color="#fca5a5" />
             {/* Gas bubbles in boiling tube */}
             {reacting && !collected && (
               <View style={{ position: "absolute", bottom: 40, left: 0, right: 0, height: 60, alignItems: "center" }}>

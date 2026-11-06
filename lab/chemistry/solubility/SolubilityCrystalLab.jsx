@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Svg, G, Circle, Polygon } from "react-native-svg";
+import Svg, { G, Circle, Polygon } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -93,6 +93,8 @@ export default function SolubilityCrystalLab() {
     return () => {
       tempAnim.removeListener(idT);
       fill.removeListener(idF);
+      tempAnim.stopAnimation();
+      fill.stopAnimation();
     };
   }, [tempAnim, fill]);
 

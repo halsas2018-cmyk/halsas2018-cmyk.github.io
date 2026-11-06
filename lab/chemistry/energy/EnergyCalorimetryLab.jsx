@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Svg, Path, Ellipse } from "react-native-svg";
+import Svg, { Path, Ellipse } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -100,6 +100,13 @@ export default function EnergyCalorimetryLab() {
     else stopGlow();
     return () => stopGlow();
   }, [status]);
+
+  useEffect(() => {
+    return () => {
+      stopGlow();
+      stirSpin.stopAnimation();
+    };
+  }, []);
 
   // Listeners keep the numeric readout + Thermometer + liquid level in sync.
   useEffect(() => {
@@ -215,14 +222,6 @@ export default function EnergyCalorimetryLab() {
   const rx = 130 - (topY - CUP_TOP) * slope;
   const liquidD = `M${lx.toFixed(1)} ${topY.toFixed(1)} L${rx.toFixed(1)} ${topY.toFixed(1)} L118 ${CUP_BOTTOM} L32 ${CUP_BOTTOM} Z`;
 
-  const Cup = () => (
-    <Svg width={CUP_W} height={CUP_H} viewBox={`0 0 ${CUP_W} ${CUP_H}`}>
-      <Path d={`M20 ${CUP_TOP} L130 ${CUP_TOP} L118 ${CUP_BOTTOM} L32 ${CUP_BOTTOM} Z`} fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
-      {f > 0.01 ? <Path d={liquidD} fill={liquidColor} opacity={0.85} /> : null}
-      <Ellipse cx={75} cy={CUP_TOP} rx={55} ry={8} fill="#f8fafc" stroke="#cbd5e1" strokeWidth="3" />
-    </Svg>
-  );
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }} edges={["top", "left", "right"]}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.colors.bg} translucent={false} />
@@ -263,7 +262,11 @@ export default function EnergyCalorimetryLab() {
         <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
           {/* Polystyrene cup with liquid */}
           <View style={{ width: CUP_W, height: CUP_H, position: "relative" }}>
-            <Cup />
+            <Svg width={CUP_W} height={CUP_H} viewBox={`0 0 ${CUP_W} ${CUP_H}`}>
+              <Path d={`M20 ${CUP_TOP} L130 ${CUP_TOP} L118 ${CUP_BOTTOM} L32 ${CUP_BOTTOM} Z`} fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
+              {f > 0.01 ? <Path d={liquidD} fill={liquidColor} opacity={0.85} /> : null}
+              <Ellipse cx={75} cy={CUP_TOP} rx={55} ry={8} fill="#f8fafc" stroke="#cbd5e1" strokeWidth="3" />
+            </Svg>
             {/* Stirring rod */}
             <Animated.View style={{ position: "absolute", top: -28, left: CUP_W / 2 - 3, transform: [{ rotate: stirSpin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) }] }}>
               <View style={{ width: 6, height: 90, backgroundColor: "#cbd5e1", borderRadius: 3, borderWidth: 1, borderColor: "#94a3b8" }} />

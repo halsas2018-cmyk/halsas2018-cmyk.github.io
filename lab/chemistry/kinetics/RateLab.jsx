@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -74,6 +74,13 @@ export default function RateLab() {
   const animTo = (a, v, d = 600) =>
     Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
 
+  useEffect(() => {
+    return () => {
+      clearTimer();
+      stopBubbles();
+    };
+  }, []);
+
   function startBubbles() {
     bubbles.forEach((b, i) => {
       b.setValue(0);
@@ -113,11 +120,11 @@ export default function RateLab() {
     if (acidAdded) return;
     setAcidAdded(true);
     Animated.sequence([
-      Animated.timing(acidBottleY, { toValue: 0, duration: 300, useNativeDriver: false }),
+      Animated.timing(acidBottleY, { toValue: 0, duration: 300, useNativeDriver: true }),
       dropAcid(acidD1Y, acidD1O),
       Animated.delay(150),
       dropAcid(acidD2Y, acidD2O),
-      Animated.timing(acidBottleY, { toValue: 70, duration: 300, useNativeDriver: false }),
+      Animated.timing(acidBottleY, { toValue: 70, duration: 300, useNativeDriver: true }),
     ]).start();
     say(`✓ ${ACIDV} mL ${concLabel} HCl poured in. The reaction begins — start the stopwatch! ⏱️`);
   }
