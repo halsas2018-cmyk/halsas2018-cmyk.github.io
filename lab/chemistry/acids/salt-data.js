@@ -31,13 +31,15 @@ export function getBase(id) {
   return BASES.find((b) => b.id === id) || BASES[0];
 }
 export function productFor(acid, base) {
+  if (!acid || !base) return { formula: "?", name: "Unknown salt" };
   return SALT_PRODUCTS[`${acid.id}|${base.id}`] || { formula: "?", name: "Unknown salt" };
 }
 
 // Volume of alkali (mL, 1.0 M) needed to exactly neutralize the acid.
 // moles H⁺ = C·V_acid·factor_a ; moles OH⁻ = C·V_base·factor_b.
-export function requiredAlkaliVol(acid, base, acidVol) {
-  return (acidVol * acid.factor) / base.factor;
+export function requiredAlkaliVol(acid, base, acidVol = DEFAULT_ACID_VOL) {
+  if (!acid || !base) return 0;
+  return (acidVol * (acid.factor || 1)) / (base.factor || 1);
 }
 
 // Indicator colour as the neutralization proceeds.
@@ -45,6 +47,7 @@ export function requiredAlkaliVol(acid, base, acidVol) {
 //   progress ≈ 1 → endpoint (neutral)
 //   progress > 1 → alkaline (overshoot)
 export function indicatorColor(indicator, progress) {
+  if (!indicator) return "#f1f5f9";
   if (indicator.id === "phenolphthalein") {
     if (progress < 0.98) return "#f1f5f9"; // colourless in acid
     if (progress <= 1.12) return "#ec4899"; // pink at endpoint
@@ -57,6 +60,7 @@ export function indicatorColor(indicator, progress) {
 }
 
 export function indicatorLabel(indicator, progress) {
+  if (!indicator) return "";
   if (progress < 0.98) return indicator.id === "phenolphthalein" ? "colourless (acidic)" : "red (acidic)";
   if (progress <= 1.12) return "ENDPOINT (neutral)";
   return indicator.id === "phenolphthalein" ? "pink (alkaline)" : "yellow (alkaline)";

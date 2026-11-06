@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StatusBar, Modal, ScrollView, Animated, Easing, KeyboardAvoidingView, Platform, TextInput } from "react-native";
-import { Svg, Rect, Circle } from "react-native-svg";
+import Svg, { Rect, Circle } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";
@@ -17,37 +17,87 @@ function Bubble({ delay, color, size = 8 }) {
   const y = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
   const x = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    let active = true;
     const run = () => {
-      y.setValue(0); o.setValue(0.8); x.setValue((Math.random() - 0.5) * 30);
+      if (!active) return;
+      y.setValue(0);
+      o.setValue(0.75);
+      x.setValue((Math.random() - 0.5) * 16);
       Animated.parallel([
-        Animated.timing(y, { toValue: -100, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(o, { toValue: 0, duration: 1500, delay, useNativeDriver: true }),
-        Animated.timing(x, { toValue: (Math.random() - 0.5) * 40, duration: 1500, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      ]).start(() => run());
+        Animated.timing(y, { toValue: -65, duration: 1300, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(o, { toValue: 0, duration: 1300, delay, useNativeDriver: true }),
+        Animated.timing(x, { toValue: (Math.random() - 0.5) * 24, duration: 1300, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(() => {
+        if (active) run();
+      });
     };
     run();
-    return () => { y.stopAnimation(); o.stopAnimation(); x.stopAnimation(); };
+    return () => {
+      active = false;
+      y.stopAnimation();
+      o.stopAnimation();
+      x.stopAnimation();
+    };
   }, [delay, y, o, x]);
+
   return (
-    <Animated.View style={{ position: "absolute", bottom: 30, left: "50%", marginLeft: -size/2, width: size, height: size, borderRadius: size/2, backgroundColor: color || "#fff", opacity: o, transform: [{ translateY: y }, { translateX: x }] }} />
+    <Animated.View
+      style={{
+        position: "absolute",
+        bottom: 18,
+        left: "50%",
+        marginLeft: -size / 2,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color || "#ffffff",
+        opacity: o,
+        transform: [{ translateY: y }, { translateX: x }],
+      }}
+    />
   );
 }
 
-// Soap curd particle
+// Soap curd particle (symmetrically spaced inside the 120px beaker)
 function SoapCurd({ delay, index }) {
   const scale = useRef(new Animated.Value(0)).current;
   const o = useRef(new Animated.Value(0)).current;
-  const y = useRef(new Animated.Value(20)).current;
+  const y = useRef(new Animated.Value(15)).current;
+
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(scale, { toValue: 1, duration: 800, delay: delay + index * 150, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
-      Animated.timing(o, { toValue: 1, duration: 500, delay: delay + index * 150, useNativeDriver: true }),
-      Animated.timing(y, { toValue: 0, duration: 800, delay: delay + index * 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 600, delay: delay + index * 120, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+      Animated.timing(o, { toValue: 1, duration: 400, delay: delay + index * 120, useNativeDriver: true }),
+      Animated.timing(y, { toValue: 0, duration: 600, delay: delay + index * 120, easing: Easing.out(Easing.quad), useNativeDriver: true }),
     ]).start();
   }, [delay, index, scale, o, y]);
+
+  // Symmetrically spaced inside the 120px beaker (x = 16 to x = 104)
+  const leftPos = 16 + index * 18;
+
   return (
-    <Animated.View style={{ position: "absolute", bottom: 25, left: 30 + index * 22, width: 16, height: 12, borderRadius: 3, backgroundColor: "#fff", borderWidth: 1, borderColor: "#e5e7eb", opacity: o, transform: [{ scale }, { translateY: y }] }} />
+    <Animated.View
+      style={{
+        position: "absolute",
+        bottom: 45,
+        left: leftPos,
+        width: 16,
+        height: 12,
+        borderRadius: 4,
+        backgroundColor: "#ffffff",
+        borderWidth: 1.5,
+        borderColor: "#cbd5e1",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 2,
+        elevation: 2,
+        opacity: o,
+        transform: [{ scale }, { translateY: y }],
+      }}
+    />
   );
 }
 
@@ -68,10 +118,16 @@ export default function ChemSoapLab() {
   const [saved, setSaved] = useState(false);
 
   const glow = useRef(new Animated.Value(0)).current;
-  const liquidFill = useRef(new Animated.Value(0)).current;
+  const liquidFill = useRef(new Animated.Value(0.35)).current;
+  const [fillState, setFillState] = useState(0.35);
   const stirSpin = useRef(new Animated.Value(0)).current;
   const [showBubbles, setShowBubbles] = useState(false);
   const [showCurds, setShowCurds] = useState(false);
+
+  useEffect(() => {
+    const id = liquidFill.addListener(({ value }) => setFillState(value));
+    return () => liquidFill.removeListener(id);
+  }, [liquidFill]);
 
   const animTo = (a, v, d = 700, native = false) => Animated.timing(a, { toValue: v, duration: d, easing: Easing.out(Easing.quad), useNativeDriver: native }).start();
   const labelStyle = { fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 12 };
@@ -81,7 +137,7 @@ export default function ChemSoapLab() {
       haptic.light(); 
       setStep(1); 
       animTo(glow, 1, 500);
-      animTo(liquidFill, 0.7, 1000);
+      animTo(liquidFill, 0.65, 1000);
       setShowBubbles(true);
       setMessage("Mixture heating — fat is reacting with NaOH (saponification). Bubbles forming...");
       // Start stirring animation
@@ -110,7 +166,11 @@ export default function ChemSoapLab() {
 
   function reset() {
     setStep(0); setStatus("idle"); setSaved(false); setNotes(""); 
-    glow.setValue(0); liquidFill.setValue(0); stirSpin.setValue(0);
+    glow.setValue(0);
+    liquidFill.setValue(0.35);
+    setFillState(0.35);
+    stirSpin.stopAnimation();
+    stirSpin.setValue(0);
     setShowBubbles(false); setShowCurds(false);
     setMessage(`Heat ${fat.name} with sodium hydroxide.`);
   }
@@ -154,32 +214,75 @@ export default function ChemSoapLab() {
       </View>
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        {/* Fixed-size beaker reference container (matches Beaker SVG dimensions) */}
-        <View style={{ width: 120, height: 180, position: "relative" }}>
-          <Animated.View style={{ opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }), position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-            <Beaker fill={liquidFill} color="#fde68a" label="fat+NaOH" />
-            {/* Stirring rod animation - centered in beaker */}
-            <Animated.View style={{ position: "absolute", top: 10, left: "50%", marginLeft: -2, transform: [{ rotate: stirSpin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) }] }}>
-              <View style={{ width: 4, height: 100, backgroundColor: "#cbd5e1", borderRadius: 2 }} />
-            </Animated.View>
-            {/* Bubbles during saponification - inside beaker liquid area */}
-            {showBubbles && (
-              <View style={{ position: "absolute", bottom: 40, left: 15, right: 15, height: 80, alignItems: "center" }}>
-                {[0, 1, 2, 3, 4].map((i) => <Bubble key={i} delay={i * 200} color="#fff" size={6 + i} />)}
-              </View>
-            )}
-            {/* Soap curds forming - at bottom of beaker */}
-            {showCurds && (
-              <View style={{ position: "absolute", bottom: 35, left: 15, right: 15, height: 30, alignItems: "center" }}>
-                {[0, 1, 2, 3, 4].map((i) => <SoapCurd key={i} delay={0} index={i} />)}
-              </View>
-            )}
+        {/* Glow effect */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            width: 170,
+            height: 170,
+            borderRadius: 85,
+            backgroundColor: ACCENT,
+            opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.12] }),
+            transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.1] }) }],
+          }}
+        />
+
+        {/* Beaker container - exact 120x140 matching Beaker SVG */}
+        <View style={{ width: 120, height: 140, position: "relative" }}>
+          <Beaker w={120} h={140} fill={fillState} color="#fef08a" label="fat + NaOH" />
+
+          {/* Stirring rod animation - centered in beaker, swirling gently */}
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: 6,
+              left: "50%",
+              marginLeft: -2,
+              transform: [
+                {
+                  translateX: stirSpin.interpolate({
+                    inputRange: [0, 0.25, 0.5, 0.75, 1],
+                    outputRange: [0, 6, 0, -6, 0],
+                  }),
+                },
+                {
+                  rotate: stirSpin.interpolate({
+                    inputRange: [0, 0.25, 0.5, 0.75, 1],
+                    outputRange: ["0deg", "7deg", "0deg", "-7deg", "0deg"],
+                  }),
+                },
+              ],
+            }}
+          >
+            <View style={{ width: 4, height: 95, backgroundColor: "#94a3b8", borderRadius: 2 }} />
           </Animated.View>
+
+          {/* Bubbles during saponification - inside beaker liquid area */}
+          {showBubbles && (
+            <View style={{ position: "absolute", top: 0, left: 10, right: 10, bottom: 0 }} pointerEvents="none">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Bubble key={i} delay={i * 200} color="#ffffff" size={6 + (i % 3) * 2} />
+              ))}
+            </View>
+          )}
+
+          {/* Soap curds forming - neatly across liquid surface */}
+          {showCurds && (
+            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <SoapCurd key={i} delay={0} index={i} />
+              ))}
+            </View>
+          )}
         </View>
+
+        {/* HotPlate directly underneath beaker */}
+        <HotPlate w={130} h={36} />
+
         <Text style={labelStyle}>
           {step === 0 ? `${fat.name} + NaOH` : step === 1 ? "Saponification in progress… 🫧" : step === 2 ? "Adding salt — curds forming…" : "Soap curds ready! 🧼"}
         </Text>
-        <HotPlate />
       </View>
 
       <View style={{ backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 18, shadowColor: "#000", shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 10 }}>

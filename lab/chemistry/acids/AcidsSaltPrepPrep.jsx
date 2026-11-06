@@ -27,12 +27,12 @@ export default function AcidsSaltPrepPrep() {
   const [baseId, setBaseId] = useState("naoh");
   const [acidVol, setAcidVol] = useState(DEFAULT_ACID_VOL);
 
-  const acid = ACIDS.find((a) => a.id === acidId);
-  const base = BASES.find((b) => b.id === baseId);
-  const rec = recommendIndicator(acid, base);
-  const indicator = { id: rec.best || "phenolphthalein", name: rec.best ? rec.best : "Phenolphthalein" };
-  const reqVol = requiredAlkaliVol(acid, base, acidVol);
-  const product = productFor(acid, base);
+  const acid = ACIDS.find((a) => a.id === acidId) || ACIDS[0];
+  const base = BASES.find((b) => b.id === baseId) || BASES[0];
+  const rec = acid && base ? recommendIndicator(acid, base) : { best: "phenolphthalein" };
+  const indicator = { id: rec?.best || "phenolphthalein", name: rec?.best === "phenolphthalein" ? "Phenolphthalein" : rec?.best === "methylorange" ? "Methyl orange" : "Phenolphthalein" };
+  const reqVol = acid && base ? requiredAlkaliVol(acid, base, acidVol) : 25;
+  const product = acid && base ? productFor(acid, base) : { formula: "NaCl", name: "Sodium chloride" };
 
   function start() {
     navigation.navigate("AcidsSaltPrepLab", {

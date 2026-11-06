@@ -68,7 +68,8 @@ export default function StatesGasLawsLab() {
   const [initialSet, setInitialSet] = useState(false);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | running | failed | success
+  const [status, setStatus] = useState("idle"); // idle | running | done
+  const [guessCorrect, setGuessCorrect] = useState(false);
   const [live, setLive] = useState({ P: init.P1, V: init.V1, Tc: init.T1c });
   const [message, setMessage] = useState("Set up the gas syringe and pressure gauge to begin.");
 
@@ -101,8 +102,8 @@ export default function StatesGasLawsLab() {
     glow.setValue(0);
   };
   useEffect(() => {
-    if (status === "success") {
-      pulseGlow();
+    if (status === "success" || status === "failed") {
+      if (status === "success") pulseGlow();
       // Animate endpoint checkmark
       Animated.sequence([
         Animated.timing(endpointScale, { toValue: 1.2, duration: 300, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
@@ -183,14 +184,14 @@ export default function StatesGasLawsLab() {
 
   function finish() {
     const correct = Math.abs(guess - answer.value) <= tol;
+    setGuessCorrect(correct);
+    setStatus("success");
+    setSaved(false);
+    setNotes("");
     if (correct) {
-      setStatus("success");
-      setSaved(false);
-      setNotes("");
       say(`✅ Spot on! The ${scenario.findVar} is ${answer.value} ${answer.unit}. Your prediction was within ±${tol}.`);
     } else {
-      setStatus("failed");
-      say(`💥 Off the mark — the true ${scenario.findVar} is ${answer.value} ${answer.unit} (your guess ${guess}). ${scenario.law}'s law: ${answer.formula}. Tap Reset to retry.`);
+      say(`The ${scenario.findVar} is ${answer.value} ${answer.unit} (your guess: ${guess}). ${scenario.law}'s law: ${answer.formula}. Try again to get within ±${tol}!`);
     }
   }
 
@@ -200,6 +201,7 @@ export default function StatesGasLawsLab() {
     setRunning(false);
     setPaused(false);
     setStatus("idle");
+    setGuessCorrect(false);
     setSetupDone(false);
     setInitialSet(false);
     setLive({ P: init.P1, V: init.V1, Tc: init.T1c });
@@ -281,23 +283,23 @@ export default function StatesGasLawsLab() {
             <Animated.View style={{ position: "absolute", bottom: 6 + colHeight, width: 104, height: 12, backgroundColor: "#475569", borderRadius: 3, left: -6 }} />
             <View style={{ position: "absolute", bottom: 6 + colHeight + 12, width: 8, height: 210 - colHeight - 12, backgroundColor: "#64748b" }} />
             {/* Endpoint indicator for Boyle */}
-            {showSuccess && (
+            {(showSuccess || showFail) && (
               <View style={{ position: "absolute", top: -80, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
                 <Animated.View style={{ 
                   width: 70, height: 70, borderRadius: 35, 
-                  backgroundColor: GREEN, 
+                  backgroundColor: guessCorrect ? GREEN : "#ef4444", 
                   alignItems: "center", justifyContent: "center",
                   transform: [{ scale: endpointScale }],
-                  shadowColor: GREEN,
+                  shadowColor: guessCorrect ? GREEN : "#ef4444",
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.4,
                   shadowRadius: 8,
                   elevation: 8,
                 }}>
-                  <Text style={{ fontSize: 32, color: "#fff" }}>✓</Text>
+                  <Text style={{ fontSize: 32, color: "#fff" }}>{guessCorrect ? "✓" : "✗"}</Text>
                 </Animated.View>
-                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: GREEN }}>
-                  <Text style={{ fontSize: 13, fontWeight: "800", color: GREEN, textAlign: "center" }}>
+                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: guessCorrect ? "rgba(22, 163, 74, 0.1)" : "rgba(239, 68, 68, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: guessCorrect ? GREEN : "#ef4444" }}>
+                  <Text style={{ fontSize: 13, fontWeight: "800", color: guessCorrect ? GREEN : "#ef4444", textAlign: "center" }}>
                     {scenario.label.includes("pressure") ? "Pressure doubled → Volume halved" : "Volume doubled → Pressure halved"}
                   </Text>
                 </View>
@@ -318,23 +320,23 @@ export default function StatesGasLawsLab() {
             </Animated.View>
             <View style={{ position: "absolute", bottom: -6, width: 30, height: 16, backgroundColor: "transparent", borderLeftWidth: 2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: BLUE, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }} />
             {/* Endpoint indicator for Charles */}
-            {showSuccess && (
+            {(showSuccess || showFail) && (
               <View style={{ position: "absolute", top: -80, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
                 <Animated.View style={{ 
                   width: 70, height: 70, borderRadius: 35, 
-                  backgroundColor: GREEN, 
+                  backgroundColor: guessCorrect ? GREEN : "#ef4444", 
                   alignItems: "center", justifyContent: "center",
                   transform: [{ scale: endpointScale }],
-                  shadowColor: GREEN,
+                  shadowColor: guessCorrect ? GREEN : "#ef4444",
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.4,
                   shadowRadius: 8,
                   elevation: 8,
                 }}>
-                  <Text style={{ fontSize: 32, color: "#fff" }}>✓</Text>
+                  <Text style={{ fontSize: 32, color: "#fff" }}>{guessCorrect ? "✓" : "✗"}</Text>
                 </Animated.View>
-                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: GREEN }}>
-                  <Text style={{ fontSize: 13, fontWeight: "800", color: GREEN, textAlign: "center" }}>
+                <View style={{ marginTop: 8, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: guessCorrect ? "rgba(22, 163, 74, 0.1)" : "rgba(239, 68, 68, 0.1)", borderRadius: 8, borderWidth: 1, borderColor: guessCorrect ? GREEN : "#ef4444" }}>
+                  <Text style={{ fontSize: 13, fontWeight: "800", color: guessCorrect ? GREEN : "#ef4444", textAlign: "center" }}>
                     Temperature changed → Volume changed proportionally (V ∝ T)
                   </Text>
                 </View>
@@ -356,27 +358,27 @@ export default function StatesGasLawsLab() {
         </View>
         
         {/* Final Result Card - appears on success */}
-        {showSuccess && (
-          <View style={{ 
+        {(showSuccess || showFail) && (
+          <Animated.View style={{ 
             position: "absolute", 
             bottom: 20, 
             left: 16, 
             right: 16,
-            backgroundColor: "#f0fdf4",
+            backgroundColor: guessCorrect ? "#f0fdf4" : "#fef2f2",
             borderWidth: 2,
-            borderColor: GREEN,
+            borderColor: guessCorrect ? GREEN : "#ef4444",
             borderRadius: 16,
             padding: 16,
             transform: [{ translateY: resultCardY }],
             zIndex: 20,
-            shadowColor: GREEN,
+            shadowColor: guessCorrect ? GREEN : "#ef4444",
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.3,
             shadowRadius: 12,
             elevation: 10,
           }}>
-            <Text style={{ fontSize: 16, fontWeight: "900", color: GREEN, textAlign: "center", marginBottom: 8 }}>
-              🎉 Experiment Complete!
+            <Text style={{ fontSize: 16, fontWeight: "900", color: guessCorrect ? GREEN : "#ef4444", textAlign: "center", marginBottom: 8 }}>
+              {guessCorrect ? "🎉 Experiment Complete!" : "⚗️ Experiment Done — Review Results"}
             </Text>
             <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 8 }}>
               <View style={{ alignItems: "center" }}>
@@ -392,15 +394,15 @@ export default function StatesGasLawsLab() {
                 <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a" }}>{final.Tc} °C</Text>
               </View>
             </View>
-            <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, padding: 10 }}>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center" }}>
-                {scenario.findVar} = {answer.value} {answer.unit} ✓
+            <View style={{ backgroundColor: guessCorrect ? "#dcfce7" : "#fee2e2", borderRadius: 8, padding: 10 }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: guessCorrect ? "#14532d" : "#991b1b", textAlign: "center" }}>
+                {scenario.findVar} = {answer.value} {answer.unit} {guessCorrect ? "✓" : ""}
               </Text>
-              <Text style={{ fontSize: 11, color: "#166534", textAlign: "center", marginTop: 2 }}>
-                Your prediction: {guess} {answer.unit} — {Math.abs(guess - answer.value) <= tol ? "Within tolerance!" : "Outside tolerance"}
+              <Text style={{ fontSize: 11, color: guessCorrect ? "#166534" : "#b91c1c", textAlign: "center", marginTop: 2 }}>
+                Your prediction: {guess} {answer.unit} — {Math.abs(guess - answer.value) <= tol ? "Within tolerance! ✓" : `Off by ${Math.abs(guess - answer.value).toFixed(2)} (±${tol} allowed)`}
               </Text>
             </View>
-          </View>
+          </Animated.View>
         )}
       </View>
 
@@ -432,9 +434,12 @@ export default function StatesGasLawsLab() {
             </TouchableOpacity>
           </View>
         ) : showFail ? (
-          <TouchableOpacity onPress={reset} style={{ alignItems: "center", paddingVertical: 12 }}>
-            <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 14 }}>↺ Reset Experiment</Text>
-          </TouchableOpacity>
+          <View>
+            <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent="#ef4444" full />
+            <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset & Try Again</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={{ flexDirection: "row" }}>
             <Btn label="① Set up" onPress={setup} disabled={setupDone} />

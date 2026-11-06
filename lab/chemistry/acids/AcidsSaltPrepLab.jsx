@@ -41,10 +41,15 @@ export default function AcidsSaltPrepLab() {
 
   const acidVol = cfg?.acidVol || 25;
 
-  // No pre-selection: the student CHOOSES the acid, base and indicator.
-  const [acid, setAcid] = useState(null);
-  const [base, setBase] = useState(null);
-  const [indicator, setIndicator] = useState(null);
+  const initialAcid = cfg?.acid || null;
+  const initialBase = cfg?.base || null;
+  const initialIndicator = cfg?.indicatorId
+    ? INDICATORS.find((i) => i.id === cfg.indicatorId) || { id: cfg.indicatorId, name: cfg.indicatorName || "Indicator" }
+    : cfg?.indicator || null;
+
+  const [acid, setAcid] = useState(initialAcid);
+  const [base, setBase] = useState(initialBase);
+  const [indicator, setIndicator] = useState(initialIndicator);
 
   const reqVol = acid && base ? requiredAlkaliVol(acid, base, acidVol) : 0;
   const product = acid && base ? productFor(acid, base) : { formula: "?", name: "Unknown salt" };
@@ -56,8 +61,14 @@ export default function AcidsSaltPrepLab() {
   const [phase, setPhase] = useState("acid"); // acid | neutralize | evaporate | crystallize
   const [heating, setHeating] = useState(false);
   const [status, setStatus] = useState("idle");
-  const [message, setMessage] = useState("Choose your acid, base and indicator, then add the acid to begin.");
+  const [message, setMessage] = useState(
+    initialAcid && initialBase
+      ? `Reagents selected: ${initialAcid.formula} + ${initialBase.formula}. Tap "① Add ${initialAcid.formula}" to begin.`
+      : "Choose your acid, base and indicator, then add the acid to begin."
+  );
 
+  const crystallizeTimer = useRef(null);
+  const evaporateTimer = useRef(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
@@ -90,18 +101,18 @@ export default function AcidsSaltPrepLab() {
     if (!acid || !base || !indicator) return say("Choose your acid, base and indicator first! 🧪");
     setAcidPoured(true);
     setPhase("neutralize");
-    addDrop(acid.color);
+    addDrop(acid.color || "#38bdf8");
     animTo(level, 0.45, 700, false);
     say(`✓ ${acid.formula} poured into the beaker. Now add ${base.formula} drop by drop until the endpoint.`);
   }
 
   function addAlkali() {
-    if (!acidPoured || status !== "idle") return;
+    if (!acidPoured || status !== "idle" || !base) return;
     if (alkaliAdded >= reqVol * 1.25) return;
     const next = Math.round((alkaliAdded + ADD_STEP) * 10) / 10;
     setAlkaliAdded(next);
-    addDrop(base.color);
-    animTo(level, Math.min(0.85, 0.45 + (next / reqVol) * 0.4), 350, false);
+    addDrop(base.color || "#f472b6");
+    animTo(level, Math.min(0.85, 0.45 + (next / (reqVol || 1)) * 0.4), 350, false);
     if (next > reqVol * 1.15) {
       setStatus("failed");
       say(`💥 TOO MUCH ALKALI! You added ${next.toFixed(1)} mL but only ${reqVol.toFixed(1)} mL was needed. The salt is now impure (excess ${base.formula}). Reset and stop at the endpoint.`);
@@ -120,37 +131,39 @@ export default function AcidsSaltPrepLab() {
     setPhase("evaporate");
     setHeating(true);
     animTo(level, 0.2, 2200, false);
-    Animated.delay(2250).start(() => {
+    evaporateTimer.current = setTimeout(() => {
       setHeating(false);
       setPhase("crystallize");
       say("✓ Solution is now saturated (small volume left). Cool it to grow crystals.");
-    });
+    }, 2250);
   }
 
   function crystallize() {
     if (phase !== "crystallize" || status !== "idle") return;
     Animated.timing(crystalGrow, { toValue: 1, duration: 1400, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
-    Animated.delay(1450).start(() => {
+    crystallizeTimer.current = setTimeout(() => {
       setStatus("success");
       setSaved(false);
       setNotes("");
-      say(`🎉 Pure ${product.name} (${product.formula}) crystals formed! View the report.`);
-    });
+      say(`🎉 Pure ${product?.name || "Salt"} (${product?.formula || ""}) crystals formed! View the report.`);
+    }, 1450);
   }
 
   function reset() {
+    if (evaporateTimer.current) { clearTimeout(evaporateTimer.current); evaporateTimer.current = null; }
+    if (crystallizeTimer.current) { clearTimeout(crystallizeTimer.current); crystallizeTimer.current = null; }
     setAcidPoured(false);
     setAlkaliAdded(0);
     setPhase("acid");
     setHeating(false);
     setStatus("idle");
-    setAcid(null);
-    setBase(null);
-    setIndicator(null);
+    setAcid(initialAcid);
+    setBase(initialBase);
+    setIndicator(initialIndicator);
     setDrops([]);
     level.setValue(0);
     crystalGrow.setValue(0);
-    say("Bench reset. Choose your acid, base and indicator to begin.");
+    say(initialAcid && initialBase ? `Bench reset. Tap "① Add ${initialAcid.formula}" to begin.` : "Bench reset. Choose your acid, base and indicator to begin.");
   }
 
   async function saveReport() {
@@ -160,16 +173,16 @@ export default function AcidsSaltPrepLab() {
       experimentTitle: experiment.title || "Preparation of a Salt",
       topicId,
       date: new Date().toLocaleDateString(),
-      acid: acid.formula,
-      base: base.formula,
+      acid: acid?.formula || "HCl",
+      base: base?.formula || "NaOH",
       acidVol,
-      alkaliVol: reqVol.toFixed(1),
+      alkaliVol: reqVol ? reqVol.toFixed(1) : "0",
       indicator: indicatorName,
-      saltFormula: product.formula,
-      saltName: product.name,
-      result: `${product.name} (${product.formula})`,
+      saltFormula: product?.formula || "",
+      saltName: product?.name || "",
+      result: `${product?.name || "Salt"} (${product?.formula || ""})`,
       status: "success",
-      summary: `Neutralized ${acidVol} mL ${acid.formula} with ${reqVol.toFixed(1)} mL ${base.formula} (${indicatorName}). Evaporated to saturation, cooled → pure ${product.name} crystals (${product.formula}).`,
+      summary: `Neutralized ${acidVol} mL ${acid?.formula || "acid"} with ${reqVol ? reqVol.toFixed(1) : "0"} mL ${base?.formula || "alkali"} (${indicatorName}). Evaporated to saturation, cooled → pure ${product?.name || "salt"} crystals (${product?.formula || ""}).`,
       notes: notes.trim(),
     };
     const ok = await labStorage.saveReport(report);
@@ -253,7 +266,11 @@ export default function AcidsSaltPrepLab() {
         </View>
 
         <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "700", marginTop: 12 }}>
-          {!acidPoured ? "Empty beaker" : endpointReached ? (status === "success" ? `${product.formula} crystals 💎` : heating ? "Evaporating…" : "Saturated solution") : `Adding ${base.formula}`}
+          {!acidPoured
+            ? "Empty beaker"
+            : endpointReached
+            ? (status === "success" ? `${product?.formula || "Salt"} crystals 💎` : heating ? "Evaporating…" : "Saturated solution")
+            : (base ? `Adding ${base.formula}` : "Adding alkali")}
         </Text>
       </View>
 
@@ -295,7 +312,7 @@ export default function AcidsSaltPrepLab() {
               </View>
               <Text style={{ fontSize: 11, fontWeight: "800", color: "#475569", marginLeft: 8 }}>{alkaliAdded.toFixed(1)}/{reqVol.toFixed(1)} mL</Text>
             </View>
-            <Btn label={`＋ Add ${base.formula} (${ADD_STEP} mL)`} onPress={addAlkali} accent="#7c3aed" full />
+            <Btn label={`＋ Add ${base?.formula || "alkali"} (${ADD_STEP} mL)`} onPress={addAlkali} accent="#7c3aed" full />
             <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
               <View style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: liqColor, borderWidth: 1, borderColor: "#cbd5e1" }} />
               <Text style={{ fontSize: 11, color: "#64748b", marginLeft: 6, fontWeight: "700" }}>Indicator: {indicatorLabel({ id: indicatorId }, progress)}</Text>
@@ -325,10 +342,10 @@ export default function AcidsSaltPrepLab() {
             <Text style={{ fontSize: 26, textAlign: "center" }}>🎉</Text>
             <Text style={{ fontSize: 18, fontWeight: "800", textAlign: "center", color: theme.colors.text, marginTop: 6 }}>Salt Prepared!</Text>
             <View style={{ backgroundColor: theme.colors.surfaceMuted, borderRadius: 12, padding: 14, marginVertical: 14 }}>
-              <Text style={{ fontSize: 13, color: theme.colors.textMuted }}>• Acid: {acid.formula} ({acidVol} mL)</Text>
-              <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Alkali: {base.formula} ({reqVol.toFixed(1)} mL)</Text>
+              <Text style={{ fontSize: 13, color: theme.colors.textMuted }}>• Acid: {acid?.formula || "—"} ({acidVol} mL)</Text>
+              <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Alkali: {base?.formula || "—"} ({reqVol ? reqVol.toFixed(1) : "0"} mL)</Text>
               <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Indicator: {indicatorName}</Text>
-              <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Salt: <Text style={{ fontWeight: "800" }}>{product.formula} · {product.name}</Text></Text>
+              <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Salt: <Text style={{ fontWeight: "800" }}>{product?.formula || "—"} · {product?.name || "—"}</Text></Text>
               <Text style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>• Method: neutralize → evaporate → crystallize</Text>
             </View>
             <Text style={{ fontSize: 12, fontWeight: "600", color: theme.colors.textMuted, marginBottom: 6 }}>Your report / observations</Text>

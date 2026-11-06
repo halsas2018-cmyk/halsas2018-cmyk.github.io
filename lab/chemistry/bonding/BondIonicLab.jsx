@@ -11,10 +11,8 @@ import {
   Easing,
   KeyboardAvoidingView,
   Platform,
-  Svg,
-  Circle,
-  Text as SvgText,
 } from "react-native";
+import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { labStorage } from "../../../storage/labStorage";

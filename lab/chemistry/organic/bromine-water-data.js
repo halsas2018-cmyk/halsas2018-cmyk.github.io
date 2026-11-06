@@ -1,7 +1,7 @@
 // Shared data + helpers for the bromine-water unsaturation test.
 
-export const BROMINE = "#f97316";
-export const CLEAR = "#fdf2f8";
+export const BROMINE = "#ea580c";
+export const CLEAR = "#e0f2fe";
 
 export const SAMPLES = [
   { id: "alkene", name: "Alkene (e.g. ethene)", decolorizes: true, note: "Alkenes have a C=C double bond that reacts with bromine, decolorising it." },
