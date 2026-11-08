@@ -275,39 +275,41 @@ export default function ChemOxygenLab() {
         </View>
 
         {/* Result card - slides up on success */}
-        <Animated.View style={{ 
-          position: "absolute", 
-          bottom: 20, 
-          left: 16, 
-          right: 16,
-          backgroundColor: "#f0fdf4",
-          borderWidth: 2,
-          borderColor: ACCENT,
-          borderRadius: 16,
-          padding: 16,
-          transform: [{ translateY: resultCardY }],
-          zIndex: 20,
-          shadowColor: ACCENT,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
-          elevation: 10,
-        }}>
-          <Text style={{ fontSize: 16, fontWeight: "900", color: ACCENT, textAlign: "center", marginBottom: 8 }}>
-            🎉 Experiment Complete!
-          </Text>
-          <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, padding: 10 }}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center" }}>
-              Method: {method.name}
+        {status === "success" && (
+          <Animated.View style={{ 
+            position: "absolute", 
+            bottom: 20, 
+            left: 16, 
+            right: 16,
+            backgroundColor: "#f0fdf4",
+            borderWidth: 2,
+            borderColor: ACCENT,
+            borderRadius: 16,
+            padding: 16,
+            transform: [{ translateY: resultCardY }],
+            zIndex: 20,
+            shadowColor: ACCENT,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 10,
+          }}>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: ACCENT, textAlign: "center", marginBottom: 8 }}>
+              🎉 Experiment Complete!
             </Text>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
-              Equation: {method.formula}
-            </Text>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
-              Result: O₂ collected (relights glowing splint) ✓
-            </Text>
-          </View>
-        </Animated.View>
+            <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, padding: 10 }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center" }}>
+                Method: {method.name}
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
+                Equation: {method.formula}
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#14532d", textAlign: "center", marginTop: 2 }}>
+                Result: O₂ collected (relights glowing splint) ✓
+              </Text>
+            </View>
+          </Animated.View>
+        )}
 
         {status === "success" ? (
           <View style={{ width: "100%" }}>

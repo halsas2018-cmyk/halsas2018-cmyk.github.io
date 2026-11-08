@@ -290,7 +290,14 @@ export default function TitrationLab() {
           <Text style={{ fontSize: 13, lineHeight: 19, color: "#1f2937" }}>{message}</Text>
         </View>
 
-        {!titrating ? (
+        {status === "success" ? (
+          <View style={{ width: "100%" }}>
+            <Btn label="📝 View Report" onPress={() => setReportOpen(true)} accent={GREEN} full />
+            <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset Experiment</Text>
+            </TouchableOpacity>
+          </View>
+        ) : !titrating ? (
           <View style={{ flexDirection: "row" }}>
             <Btn label="① Place Beaker" onPress={placeFlask} disabled={flaskPlaced} />
             <Btn label={`② ${BASE_VOL.toFixed(0)} mL ${base.formula}`} onPress={addNaOH} disabled={!flaskPlaced || naohAdded} />
@@ -308,7 +315,7 @@ export default function TitrationLab() {
           </>
         )}
 
-        {(status === "failed" || buretteFilled) && (
+        {status !== "success" && (status === "failed" || buretteFilled) && (
           <TouchableOpacity onPress={reset} style={{ marginTop: 10, alignItems: "center", paddingVertical: 8 }}>
             <Text style={{ color: "#64748b", fontWeight: "700", fontSize: 13 }}>↺ Reset Experiment</Text>
           </TouchableOpacity>

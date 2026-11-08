@@ -16,6 +16,8 @@ import TitrationLab from "../lab/chemistry/acids/TitrationLab";
 import TitrationPrep from "../lab/titration/TitrationPrep";
 import RateLab from "../lab/chemistry/kinetics/RateLab";
 import RatePrep from "../lab/chemistry/kinetics/RatePrep";
+import TempRatePrep from "../lab/chemistry/kinetics/TempRatePrep";
+import TempRateLab from "../lab/chemistry/kinetics/TempRateLab";
 // Chemistry interactive labs
 import MetalsExtractionPrep from "../lab/chemistry/metals/MetalsExtractionPrep";
 import MetalsExtractionLab from "../lab/chemistry/metals/MetalsExtractionLab";
@@ -125,6 +127,9 @@ import PhysLcrResonancePrep from "../lab/physics/p5-ac-circuits/PhysLcrResonance
 import PhysLcrResonanceLab from "../lab/physics/p5-ac-circuits/PhysLcrResonanceLab";
 import PhysLatentFusionPrep from "../lab/physics/p2-heat-energy/PhysLatentFusionPrep";
 import PhysLatentFusionLab from "../lab/physics/p2-heat-energy/PhysLatentFusionLab";
+// New: Ohm's Law & Resistance
+import PhysOhmsLawPrep from "../lab/physics/p4-electric-field/PhysOhmsLawPrep";
+import PhysOhmsLawLab from "../lab/physics/p4-electric-field/PhysOhmsLawLab";
 import LabResultsScreen from "../screens/LabResultsScreen";
 // Study cards
 import StudyHubScreen from "../study/StudyHubScreen";
@@ -313,6 +318,10 @@ function LabStackNavigator() {
       <LabStack.Screen name="PhysLcrResonanceLab" component={PhysLcrResonanceLab} options={{ tabBarStyle: { display: "none" } }} />
       <LabStack.Screen name="PhysLatentFusionPrep" component={PhysLatentFusionPrep} options={{ tabBarStyle: { display: "none" } }} />
       <LabStack.Screen name="PhysLatentFusionLab" component={PhysLatentFusionLab} options={{ tabBarStyle: { display: "none" } }} />
+      <LabStack.Screen name="PhysOhmsLawPrep" component={PhysOhmsLawPrep} options={{ tabBarStyle: { display: "none" } }} />
+      <LabStack.Screen name="PhysOhmsLawLab" component={PhysOhmsLawLab} options={{ tabBarStyle: { display: "none" } }} />
+      <LabStack.Screen name="TempRatePrep" component={TempRatePrep} options={{ tabBarStyle: { display: "none" } }} />
+      <LabStack.Screen name="TempRateLab" component={TempRateLab} options={{ tabBarStyle: { display: "none" } }} />
       <LabStack.Screen
         name="LabResultsScreen"
         component={LabResultsScreen}

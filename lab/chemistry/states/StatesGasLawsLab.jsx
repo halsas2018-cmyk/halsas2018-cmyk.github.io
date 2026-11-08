@@ -444,7 +444,7 @@ export default function StatesGasLawsLab() {
           <View style={{ flexDirection: "row" }}>
             <Btn label="① Set up" onPress={setup} disabled={setupDone} />
             <Btn label="② Initial" onPress={setInitial} disabled={!setupDone || initialSet} accent="#0ea5e9" />
-            <Btn label="③ Run" onPress={run} disabled={!initialSet || running} accent={GREEN} />
+            <Btn label="③ Run" onPress={() => run(0)} disabled={!initialSet || running} accent={GREEN} />
           </View>
         )}
 
